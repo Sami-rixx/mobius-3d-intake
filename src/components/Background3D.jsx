@@ -1,7 +1,24 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, Suspense } from 'react';
+import React from 'react';
 import * as THREE from 'three';
+
+// Check if WebGL is available
+function isWebGLAvailable() {
+  try {
+    return !!window.WebGLRenderingContext;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Fallback background (gradient)
+function FallbackBackground() {
+  return (
+    <div className="fixed inset-0 z-0 bg-gradient-to-br from-night via-muse-blue to-night" />
+  );
+}
 
 // Individual floating shape component
 function FloatingShape({ 
@@ -59,7 +76,7 @@ function FloatingShape({
 
   return (
     <mesh ref={meshRef} position={position} castShadow receiveShadow>
-      <geometry>{geometry}</geometry>
+      {geometry}
       <meshBasicMaterial 
         color={color}
         transparent={true}
@@ -145,72 +162,113 @@ function DodecahedronShape({ position, color, size = 1 }) {
   );
 }
 
+// Error boundary for 3D canvas
+class CanvasErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('3D Canvas error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <FallbackBackground />;
+    }
+    return this.props.children;
+  }
+}
+
 // Main 3D Background Component
 function Background3D() {
+  // Check if we're in a browser environment with WebGL
+  const [show3D, setShow3D] = useState(false);
+
+  useEffect(() => {
+    // Only show 3D if WebGL is available and we're in a browser
+    if (typeof window !== 'undefined' && isWebGLAvailable()) {
+      setShow3D(true);
+    }
+  }, []);
+
+  if (!show3D) {
+    return <FallbackBackground />;
+  }
+
   return (
-    <Canvas
-      camera={{ 
-        position: [0, 0, 30], 
-        fov: 60,
-        near: 1,
-        far: 1000 
-      }}
-      style={{ background: 'transparent' }}
-      gl={{ antialias: false, alpha: true }}
-    >
-      {/* Lighting */}
-      <ambientLight intensity={0.5} color="#ffffff" />
-      <directionalLight 
-        position={[10, 10, 10]} 
-        intensity={0.3} 
-        color="#2FA6A0" 
-      />
-      <directionalLight 
-        position={[-10, -10, -10]} 
-        intensity={0.3} 
-        color="#C9A96E" 
-      />
-      <pointLight position={[20, 20, 20]} color="#2FA6A0" intensity={0.5} />
-      <pointLight position={[-20, -20, -20]} color="#C9A96E" intensity={0.5} />
+    <CanvasErrorBoundary>
+      <Canvas
+        camera={{ 
+          position: [0, 0, 30], 
+          fov: 60,
+          near: 1,
+          far: 1000 
+        }}
+        style={{ background: 'transparent' }}
+        gl={{ antialias: false, alpha: true }}
+      >
+        {/* Lighting */}
+        <ambientLight intensity={0.5} color="#ffffff" />
+        <directionalLight 
+          position={[10, 10, 10]} 
+          intensity={0.3} 
+          color="#2FA6A0" 
+        />
+        <directionalLight 
+          position={[-10, -10, -10]} 
+          intensity={0.3} 
+          color="#C9A96E" 
+        />
+        <pointLight position={[20, 20, 20]} color="#2FA6A0" intensity={0.5} />
+        <pointLight position={[-20, -20, -20]} color="#C9A96E" intensity={0.5} />
 
-      {/* Environment for reflections */}
-      <Environment preset="city" />
+        {/* Environment for reflections */}
+        <Environment preset="city" />
 
-      {/* 5 Floating Shapes - positioned behind UI */}
-      <TorusKnotShape 
-        position={[15, 8, -15]} 
-        color="#2FA6A0" 
-        size={2}
-      />
-      <IcosahedronShape 
-        position={[-12, -6, -20]} 
-        color="#C9A96E" 
-        size={1.5}
-      />
-      <OctahedronShape 
-        position={[10, -10, -18]} 
-        color="#1B3A5C" 
-        size={1.2}
-      />
-      <TetrahedronShape 
-        position={[-8, 12, -12]} 
-        color="#2FA6A0" 
-        size={1}
-      />
-      <DodecahedronShape 
-        position={[5, -15, -25]} 
-        color="#C9A96E" 
-        size={1.3}
-      />
+        {/* 5 Floating Shapes - positioned behind UI */}
+        <Suspense fallback={null}>
+          <TorusKnotShape 
+            position={[15, 8, -15]} 
+            color="#2FA6A0" 
+            size={2}
+          />
+          <IcosahedronShape 
+            position={[-12, -6, -20]} 
+            color="#C9A96E" 
+            size={1.5}
+          />
+          <OctahedronShape 
+            position={[10, -10, -18]} 
+            color="#1B3A5C" 
+            size={1.2}
+          />
+          <TetrahedronShape 
+            position={[-8, 12, -12]} 
+            color="#2FA6A0" 
+            size={1}
+          />
+          <DodecahedronShape 
+            position={[5, -15, -25]} 
+            color="#C9A96E" 
+            size={1.3}
+          />
+        </Suspense>
 
-      {/* Disable orbit controls - we want fixed camera */}
-      <OrbitControls 
-        enabled={false}
-        enableZoom={false}
-        enablePan={false}
-        enableRotate={false}
-      />
-    </Canvas>
+        {/* Disable orbit controls - we want fixed camera */}
+        <OrbitControls 
+          enabled={false}
+          enableZoom={false}
+          enablePan={false}
+          enableRotate={false}
+        />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 }
 
