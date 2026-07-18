@@ -191,6 +191,79 @@
   outline-offset: 1px;
 }
 
+/* Priority radio chips - styled as chips but using native radio inputs */
+.priority-radio-group {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+}
+
+.priority-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border: 2px solid;
+  border-radius: 16px;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.priority-chip:focus-within {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+/* Priority chip variants */
+.priority-chip.priority-preferred {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  background-color: transparent;
+}
+
+.priority-chip.priority-preferred input:checked + span,
+.priority-chip.priority-preferred.selected {
+  background-color: var(--accent-teal);
+  color: #000;
+}
+
+.priority-chip.priority-normal {
+  border-color: rgba(215, 222, 231, 0.6);
+  color: var(--text-body);
+  background-color: transparent;
+}
+
+.priority-chip.priority-normal input:checked + span,
+.priority-chip.priority-normal.selected {
+  background-color: rgba(215, 222, 231, 0.4);
+  color: #000;
+  border-color: rgba(215, 222, 231, 0.8);
+}
+
+.priority-chip.priority-last-resort {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background-color: transparent;
+}
+
+.priority-chip.priority-last-resort input:checked + span,
+.priority-chip.priority-last-resort.selected {
+  background-color: var(--accent-gold);
+  color: #000;
+}
+
+/* Grade labels - high contrast for readability */
+.grade-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-body);
+  min-width: 24px;
+  text-align: center;
+}
+
 /* Subject/Teacher tables */
 .table-like {
   width: 100%;

@@ -7,6 +7,7 @@
 - 2025-07-18 Milestone 4 — Step 2: Subject Roster with seed rows, N/A exclusion implemented, +Add Subject working with uniqueness validation
 - 2025-07-18 Milestone 5 — Step 3: Teachers with repeatable cards, capabilities/preferences grid, subject-level granularity implemented
 - 2025-07-18 Milestone 6 — Assembly: main.js step router, output.js with download/copy/send actions, full QA checklist verified
+- 2025-07-18 Part 7 Fixes — Grade range trimmed to G4-G10 via shared config.js, priority chips wired as real radio groups with visual selection state, grade labels high-contrast
 
 ## Key decisions made
 - Plain HTML + CSS + vanilla JS (ES modules), no framework, no bundler, no build step
@@ -17,9 +18,11 @@
 - Subject-level priority granularity for v1 (per-grade override deferred)
 - Teacher IDs auto-generated as T-001, T-002, etc.
 - Confidence field defaulted to 1.0 for all form-submitted records
+- Grade range consolidated into single source of truth (config.js) for easy future updates
+- Priority chips use native radio inputs styled as chips for proper mutual exclusivity
 
 ## Assumptions flagged for Sam to verify
-- Grade representation: plain integers (4–9), not strings like "G4"
+- Grade representation: plain integers (4–10), not strings like "G4"
 - `overload_policy` "allow overload" value: using `"allow_overload"`
 - Q4 "No" case: `specialist_scope_lock` set to `false`
 - `confidence`: defaulting to `1.0` for all form-submitted teacher records
@@ -30,6 +33,6 @@
 - Live Gatechecker submission endpoint (GATECHECKER_ENDPOINT in output.js needs to be set)
 
 ## Next up
-- Deploy to Vercel and test on real mobile devices
+- Deploy to Vercel/Netlify and test on real mobile devices
 - Sam to verify assumptions against live Gatechecker
 - Sam to provide complete CBC subject list if needed

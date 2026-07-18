@@ -1,16 +1,10 @@
 // Step 3: Teachers
 import { getState, updateState } from './state.js';
 import { navigateToStep } from './main.js';
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS, PRIORITY_MAP, PRIORITY_VALUES } from './config.js';
 
 // DOM elements
 const stepContainer = document.getElementById('step-3');
-
-// Priority mapping
-const PRIORITY_MAP = {
-  'preferred': 1,
-  'normal': 2,
-  'last-resort': 3
-};
 
 // Priority chip classes
 const PRIORITY_CLASSES = {
@@ -165,7 +159,7 @@ function render() {
               <thead>
                 <tr>
                   <th>Subject</th>
-                  ${Array.from({ length: 9 }, (_, i) => i + 4).map(g => `<th>G${g}</th>`).join('')}
+                  ${SCHOOL_GRADE_RANGE.map(g => `<th class="grade-label">G${g}</th>`).join('')}
                   <th>Priority</th>
                 </tr>
               </thead>
@@ -184,9 +178,10 @@ function render() {
       
       const gradesCanTeach = capability ? capability.grades_can_teach : [];
       const priority = preference ? preference.priority : 2;
+      const priorityKey = PRIORITY_VALUES[priority] || 'normal';
       
-      // Get priority chip class
-      const priorityClass = Object.entries(PRIORITY_MAP).find(([k, v]) => v === priority)?.[0] || 'normal';
+      // Generate a unique radio group name for this subject/teacher
+      const radioGroupName = `priority-${teacher.teacher_id}-${subject.subject_code}`;
       
       html += `
         <tr>
@@ -197,7 +192,7 @@ function render() {
   `;
       
       // Render grade checkboxes
-      for (let g = 4; g <= 9; g++) {
+      SCHOOL_GRADE_RANGE.forEach(g => {
         const isApplicable = applicableGrades.includes(g);
         const isChecked = gradesCanTeach.includes(g);
         
@@ -217,32 +212,47 @@ function render() {
         } else {
           html += `<td style="opacity: 0.3;">—</td>`;
         }
-      }
+      });
       
       html += `
         <td>
-          <div class="chip-grid" style="gap: 0.25rem;">
-            <button 
-              type="button" 
-              class="chip priority-preferred ${priorityClass === 'preferred' ? 'selected' : ''}" 
-              data-teacher-index="${teacherIndex}" 
-              data-subject-code="${subject.subject_code}"
-              data-priority="1"
-            >Preferred</button>
-            <button 
-              type="button" 
-              class="chip priority-normal ${priorityClass === 'normal' ? 'selected' : ''}" 
-              data-teacher-index="${teacherIndex}" 
-              data-subject-code="${subject.subject_code}"
-              data-priority="2"
-            >Normal</button>
-            <button 
-              type="button" 
-              class="chip priority-last-resort ${priorityClass === 'last-resort' ? 'selected' : ''}" 
-              data-teacher-index="${teacherIndex}" 
-              data-subject-code="${subject.subject_code}"
-              data-priority="3"
-            >Last resort</button>
+          <div class="priority-radio-group" style="display: flex; gap: 0.25rem; flex-wrap: nowrap;">
+            <label class="priority-chip priority-preferred" style="cursor: pointer;">
+              <input 
+                type="radio" 
+                name="${radioGroupName}"
+                value="1"
+                data-teacher-index="${teacherIndex}"
+                data-subject-code="${subject.subject_code}"
+                ${priority === 1 ? 'checked' : ''}
+                style="display: none;"
+              >
+              <span>Preferred</span>
+            </label>
+            <label class="priority-chip priority-normal" style="cursor: pointer;">
+              <input 
+                type="radio" 
+                name="${radioGroupName}"
+                value="2"
+                data-teacher-index="${teacherIndex}"
+                data-subject-code="${subject.subject_code}"
+                ${priority === 2 ? 'checked' : ''}
+                style="display: none;"
+              >
+              <span>Normal</span>
+            </label>
+            <label class="priority-chip priority-last-resort" style="cursor: pointer;">
+              <input 
+                type="radio" 
+                name="${radioGroupName}"
+                value="3"
+                data-teacher-index="${teacherIndex}"
+                data-subject-code="${subject.subject_code}"
+                ${priority === 3 ? 'checked' : ''}
+                style="display: none;"
+              >
+              <span>Last resort</span>
+            </label>
           </div>
         </td>
         </tr>
@@ -267,8 +277,29 @@ function render() {
   
   stepContainer.innerHTML = html;
   
+  // Update priority chip visual states
+  updatePriorityChipStates();
+  
   // Re-setup event listeners after render
   setupEventListeners();
+}
+
+// Update visual state of priority chips based on radio selection
+function updatePriorityChipStates() {
+  document.querySelectorAll('.priority-radio-group').forEach(group => {
+    const radio = group.querySelector('input[type="radio"]:checked');
+    if (radio) {
+      // Remove selected class from all chips in this group
+      group.querySelectorAll('.priority-chip').forEach(chip => {
+        chip.classList.remove('selected');
+      });
+      // Add selected class to the checked chip
+      const checkedLabel = group.querySelector(`label[for="${radio.id}"]`) || radio.closest('label');
+      if (checkedLabel) {
+        checkedLabel.classList.add('selected');
+      }
+    }
+  });
 }
 
 // Setup event listeners
@@ -375,23 +406,15 @@ function setupEventListeners() {
     });
   });
   
-  // Priority chips
-  document.querySelectorAll('.chip[data-priority]').forEach(el => {
-    el.addEventListener('click', (e) => {
+  // Priority radio buttons
+  document.querySelectorAll('input[type="radio"][name^="priority-"]').forEach(el => {
+    el.addEventListener('change', (e) => {
       const teacherIndex = parseInt(el.dataset.teacherIndex);
       const subjectCode = el.dataset.subjectCode;
-      const priority = parseInt(el.dataset.priority);
+      const priority = parseInt(el.value);
       
       const newState = getState();
       const teacher = newState.teachers[teacherIndex];
-      
-      // Deselect siblings in same row
-      document.querySelectorAll(`[data-teacher-index="${teacherIndex}"][data-subject-code="${subjectCode}"][data-priority]`).forEach(sibling => {
-        sibling.classList.remove('selected');
-      });
-      
-      // Select clicked
-      el.classList.add('selected');
       
       // Find or create preference
       let preference = newState.preferences.find(p => 
@@ -414,6 +437,9 @@ function setupEventListeners() {
       preference.granularity = 'subject_level';
       
       updateState(newState);
+      
+      // Update visual state
+      updatePriorityChipStates();
     });
   });
   

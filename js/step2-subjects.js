@@ -1,31 +1,19 @@
 // Step 2: Subject Roster
 import { getState, updateState } from './state.js';
 import { navigateToStep } from './main.js';
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS } from './config.js';
 
 // DOM elements
 const stepContainer = document.getElementById('step-2');
 
-// Grade bands
-const GRADE_BANDS = {
-  UPPER_PRIMARY: [4, 5, 6],
-  JR_SCHOOL: [7, 8, 9]
-};
-
-// N/A exclusions: subjects that don't apply to certain bands
-const NA_EXCLUSIONS = {
-  SCI: { excluded_bands: ['JR_SCHOOL'] }, // Science & Technology
-  INTSCI: { excluded_bands: ['UPPER_PRIMARY'] }, // Integrated Science
-  PRETECH: { excluded_bands: ['UPPER_PRIMARY'] } // Pre-Technical
-};
-
 // Seed subjects from the spec
 const SEED_SUBJECTS = [
-  { subject_code: 'ENG', subject_name: 'English', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'MATH', subject_name: 'Mathematics', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'AGRI', subject_name: 'Agriculture & Nutrition', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL], periods_per_week: [3, 3, 3, 3, 3, 3], double_lessons_allowed: false },
+  { subject_code: 'ENG', subject_name: 'English', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'MATH', subject_name: 'Mathematics', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'AGRI', subject_name: 'Agriculture & Nutrition', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [3, 3, 3, 3, 3, 3, 3], double_lessons_allowed: false },
   { subject_code: 'SCI', subject_name: 'Science & Technology', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY], periods_per_week: [4, 4, 4], double_lessons_allowed: true },
-  { subject_code: 'INTSCI', subject_name: 'Integrated Science', grade_levels: [...GRADE_BANDS.JR_SCHOOL], periods_per_week: [5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'PRETECH', subject_name: 'Pre-Technical', grade_levels: [...GRADE_BANDS.JR_SCHOOL], periods_per_week: [4, 4, 4], double_lessons_allowed: true }
+  { subject_code: 'INTSCI', subject_name: 'Integrated Science', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'PRETECH', subject_name: 'Pre-Technical', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [4, 4, 4], double_lessons_allowed: true }
 ];
 
 // Initialize
@@ -53,7 +41,7 @@ function init() {
 function getApplicableGrades(subjectCode) {
   const exclusions = NA_EXCLUSIONS[subjectCode];
   if (!exclusions) {
-    return [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL];
+    return [...SCHOOL_GRADE_RANGE];
   }
   
   let applicable = [];
@@ -62,6 +50,9 @@ function getApplicableGrades(subjectCode) {
   }
   if (!exclusions.excluded_bands.includes('JR_SCHOOL')) {
     applicable = applicable.concat(GRADE_BANDS.JR_SCHOOL);
+  }
+  if (!exclusions.excluded_bands.includes('SENIOR_SCHOOL')) {
+    applicable = applicable.concat(GRADE_BANDS.SENIOR_SCHOOL);
   }
   
   return applicable;
@@ -95,7 +86,7 @@ function render() {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
           <div style="flex: 1;">
             <div class="form-group" style="margin-bottom: 0.5rem;">
-              <label class="form-label" for="subject-code-${index}">Subject Code <span class="code">${subject.subject_code}</span></label>
+              <label class="form-label" for="subject-code-${index}">Subject Code <span class="code">${escapeHtml(subject.subject_code)}</span></label>
               <input 
                 type="text" 
                 id="subject-code-${index}" 
@@ -132,7 +123,7 @@ function render() {
       
       html += `
         <div style="display: flex; align-items: center; gap: 0.25rem;">
-          <span style="font-family: var(--font-mono); font-size: 0.75rem; min-width: 24px;">G${grade}</span>
+          <span class="grade-label">G${grade}</span>
           <input 
             type="number" 
             class="form-input period-input" 
@@ -265,8 +256,8 @@ function addSubject() {
   const newSubject = {
     subject_code: '',
     subject_name: '',
-    grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL],
-    periods_per_week: [5, 5, 5, 5, 5, 5],
+    grade_levels: [...SCHOOL_GRADE_RANGE],
+    periods_per_week: Array(SCHOOL_GRADE_RANGE.length).fill(5),
     double_lessons_allowed: true
   };
   newState.subjects.push(newSubject);
@@ -320,9 +311,9 @@ function validateStep() {
   // Specific test: SCI/INTSCI/PRETECH exclusions
   const sciSubject = state.subjects.find(s => s.subject_code === 'SCI');
   if (sciSubject) {
-    const hasJrGrades = sciSubject.grade_levels.some(g => [7, 8, 9].includes(g));
+    const hasJrGrades = sciSubject.grade_levels.some(g => [7, 8, 9, 10].includes(g));
     if (hasJrGrades) {
-      errors.push('SCI (Science & Technology) must NOT include grades 7, 8, or 9 - these should be completely excluded');
+      errors.push('SCI (Science & Technology) must NOT include grades 7, 8, 9, or 10 - these should be completely excluded');
     }
   }
   
