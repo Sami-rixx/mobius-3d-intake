@@ -1,276 +1,233 @@
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
-import { useRef, useEffect, useState, Suspense } from 'react';
-import React from 'react';
+import { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
-// Check if WebGL is available
-function isWebGLAvailable() {
-  try {
-    return !!window.WebGLRenderingContext;
-  } catch (e) {
-    return false;
-  }
-}
-
-// Fallback background (gradient)
-function FallbackBackground() {
+// Simple CSS-only 3D background as fallback
+function Simple3DBackground() {
   return (
-    <div className="fixed inset-0 z-0 bg-gradient-to-br from-night via-muse-blue to-night" />
+    <div className="fixed inset-0 z-0 overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-night via-muse-blue to-night" />
+      
+      {/* Floating shapes using CSS transforms */}
+      <div className="absolute inset-0">
+        {/* Shape 1 - Floating circle */}
+        <div 
+          className="absolute w-32 h-32 rounded-full bg-accent-teal/10 opacity-15 animate-float"
+          style={{ 
+            top: '20%', 
+            left: '10%',
+            animationDelay: '0s',
+            animationDuration: '20s'
+          }}
+        />
+        
+        {/* Shape 2 - Floating square */}
+        <div 
+          className="absolute w-24 h-24 rounded-lg bg-accent-gold/10 opacity-15 animate-float"
+          style={{ 
+            top: '60%', 
+            right: '15%',
+            animationDelay: '2s',
+            animationDuration: '25s'
+          }}
+        />
+        
+        {/* Shape 3 - Floating triangle */}
+        <div 
+          className="absolute w-0 h-0 border-l-[3rem] border-r-[3rem] border-b-[5rem] border-l-transparent border-r-transparent border-b-accent-teal/10 opacity-15 animate-float"
+          style={{ 
+            top: '10%', 
+            right: '30%',
+            animationDelay: '4s',
+            animationDuration: '30s'
+          }}
+        />
+        
+        {/* Shape 4 - Floating diamond */}
+        <div 
+          className="absolute w-20 h-20 rounded-full bg-accent-gold/10 opacity-15 animate-pulse-soft"
+          style={{ 
+            bottom: '20%', 
+            left: '20%',
+            animationDelay: '1s',
+            animationDuration: '18s'
+          }}
+        />
+        
+        {/* Shape 5 - Floating hexagon */}
+        <div 
+          className="absolute w-28 h-28 rounded-[50%] bg-accent-teal/10 opacity-15 animate-float"
+          style={{ 
+            bottom: '40%', 
+            right: '25%',
+            animationDelay: '3s',
+            animationDuration: '22s',
+            clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
-// Individual floating shape component
-function FloatingShape({ 
-  geometry, 
-  position, 
-  color, 
-  size = 1,
-  rotationSpeed = 0.1,
-  floatSpeed = 1,
-  floatIntensity = 1,
-  index 
-}) {
-  const meshRef = useRef();
-  const [deviceOrientation, setDeviceOrientation] = useState({
-    alpha: 0,
-    beta: 0,
-    gamma: 0,
-  });
+// Enhanced 3D Canvas with proper error handling
+function Canvas3D() {
+  const canvasRef = useRef(null);
+  const [webGLAvailable, setWebGLAvailable] = useState(false);
 
-  // Handle device orientation for mobile
   useEffect(() => {
-    const handleDeviceOrientation = (event) => {
-      setDeviceOrientation({
-        alpha: event.alpha || 0,
-        beta: event.beta || 0,
-        gamma: event.gamma || 0,
-      });
-    };
+    // Check if WebGL is available
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      setWebGLAvailable(!!gl);
+    } catch (e) {
+      setWebGLAvailable(false);
+    }
+  }, []);
 
-    window.addEventListener('deviceorientation', handleDeviceOrientation);
+  useEffect(() => {
+    if (!webGLAvailable || !canvasRef.current) return;
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.set(0, 0, 30);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvasRef.current,
+      alpha: true,
+      antialias: false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight1 = new THREE.DirectionalLight(0x2FA6A0, 0.3);
+    directionalLight1.position.set(10, 10, 10);
+    scene.add(directionalLight1);
+
+    const directionalLight2 = new THREE.DirectionalLight(0xC9A96E, 0.3);
+    directionalLight2.position.set(-10, -10, -10);
+    scene.add(directionalLight2);
+
+    // Create 5 floating shapes
+    const shapes = [];
     
-    return () => {
-      window.removeEventListener('deviceorientation', handleDeviceOrientation);
+    // Torus Knot
+    const torusKnot = new THREE.Mesh(
+      new THREE.TorusKnotGeometry(0.8, 0.3, 100, 16),
+      new THREE.MeshBasicMaterial({ color: 0x2FA6A0, transparent: true, opacity: 0.15 })
+    );
+    torusKnot.position.set(15, 8, -15);
+    scene.add(torusKnot);
+    shapes.push(torusKnot);
+
+    // Icosahedron
+    const icosahedron = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.2),
+      new THREE.MeshBasicMaterial({ color: 0xC9A96E, transparent: true, opacity: 0.15 })
+    );
+    icosahedron.position.set(-12, -6, -20);
+    scene.add(icosahedron);
+    shapes.push(icosahedron);
+
+    // Octahedron
+    const octahedron = new THREE.Mesh(
+      new THREE.OctahedronGeometry(1.5),
+      new THREE.MeshBasicMaterial({ color: 0x1B3A5C, transparent: true, opacity: 0.15 })
+    );
+    octahedron.position.set(10, -10, -18);
+    scene.add(octahedron);
+    shapes.push(octahedron);
+
+    // Tetrahedron
+    const tetrahedron = new THREE.Mesh(
+      new THREE.TetrahedronGeometry(1.8),
+      new THREE.MeshBasicMaterial({ color: 0x2FA6A0, transparent: true, opacity: 0.15 })
+    );
+    tetrahedron.position.set(-8, 12, -12);
+    scene.add(tetrahedron);
+    shapes.push(tetrahedron);
+
+    // Dodecahedron
+    const dodecahedron = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1.1),
+      new THREE.MeshBasicMaterial({ color: 0xC9A96E, transparent: true, opacity: 0.15 })
+    );
+    dodecahedron.position.set(5, -15, -25);
+    scene.add(dodecahedron);
+    shapes.push(dodecahedron);
+
+    // Animation loop
+    let time = 0;
+    const animate = () => {
+      time += 0.01;
+      
+      // Rotate all shapes
+      shapes.forEach((shape, i) => {
+        shape.rotation.x = time * (0.5 + i * 0.1);
+        shape.rotation.y = time * (0.8 + i * 0.2);
+        shape.position.y += Math.sin(time * (1 + i * 0.3)) * 0.01;
+      });
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
     };
-  }, []);
 
-  useFrame((state) => {
-    if (meshRef.current) {
-      // Slow rotation
-      meshRef.current.rotation.x = state.clock.elapsedTime * rotationSpeed * 0.5;
-      meshRef.current.rotation.y = state.clock.elapsedTime * rotationSpeed * 0.8;
-      
-      // Floating up and down
-      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * floatSpeed) * floatIntensity;
-      
-      // Apply device tilt on mobile
-      if (window.innerWidth <= 768) {
-        const tiltX = (deviceOrientation.beta || 0) * 0.01;
-        const tiltY = (deviceOrientation.gamma || 0) * 0.01;
-        meshRef.current.rotation.x += tiltX * 0.5;
-        meshRef.current.rotation.y += tiltY * 0.5;
-      }
-    }
-  });
+    animate();
 
-  return (
-    <mesh ref={meshRef} position={position} castShadow receiveShadow>
-      {geometry}
-      <meshBasicMaterial 
-        color={color}
-        transparent={true}
-        opacity={0.15}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
-  );
-}
+    // Handle window resize
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
 
-// Low-poly torus knot
-function TorusKnotShape({ position, color, size = 1 }) {
-  return (
-    <FloatingShape
-      geometry={<torusKnotGeometry args={[size * 0.8, size * 0.3, 100, 16]} />}
-      position={position}
-      color={color}
-      size={size}
-      rotationSpeed={0.05}
-      floatSpeed={0.8}
-      floatIntensity={1.5}
-    />
-  );
-}
+    window.addEventListener('resize', handleResize);
 
-// Icosahedron shape
-function IcosahedronShape({ position, color, size = 1 }) {
-  return (
-    <FloatingShape
-      geometry={<icosahedronGeometry args={[size * 1.2]} />}
-      position={position}
-      color={color}
-      size={size}
-      rotationSpeed={0.15}
-      floatSpeed={1.2}
-      floatIntensity={1}
-    />
-  );
-}
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animate);
+      renderer.dispose();
+    };
+  }, [webGLAvailable]);
 
-// Octahedron shape
-function OctahedronShape({ position, color, size = 1 }) {
-  return (
-    <FloatingShape
-      geometry={<octahedronGeometry args={[size * 1.5]} />}
-      position={position}
-      color={color}
-      size={size}
-      rotationSpeed={0.1}
-      floatSpeed={0.6}
-      floatIntensity={2}
-    />
-  );
-}
-
-// Tetrahedron shape
-function TetrahedronShape({ position, color, size = 1 }) {
-  return (
-    <FloatingShape
-      geometry={<tetrahedronGeometry args={[size * 1.8]} />}
-      position={position}
-      color={color}
-      size={size}
-      rotationSpeed={0.2}
-      floatSpeed={1.5}
-      floatIntensity={0.8}
-    />
-  );
-}
-
-// Dodecahedron shape
-function DodecahedronShape({ position, color, size = 1 }) {
-  return (
-    <FloatingShape
-      geometry={<dodecahedronGeometry args={[size * 1.1]} />}
-      position={position}
-      color={color}
-      size={size}
-      rotationSpeed={0.08}
-      floatSpeed={0.9}
-      floatIntensity={1.2}
-    />
-  );
-}
-
-// Error boundary for 3D canvas
-class CanvasErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
+  if (!webGLAvailable) {
+    return <Simple3DBackground />;
   }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('3D Canvas error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <FallbackBackground />;
-    }
-    return this.props.children;
-  }
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-0"
+      style={{ background: 'transparent' }}
+    />
+  );
 }
 
-// Main 3D Background Component
+// Main component with fallback
 function Background3D() {
-  // Check if we're in a browser environment with WebGL
-  const [show3D, setShow3D] = useState(false);
+  const [useCanvas, setUseCanvas] = useState(true);
 
   useEffect(() => {
-    // Only show 3D if WebGL is available and we're in a browser
-    if (typeof window !== 'undefined' && isWebGLAvailable()) {
-      setShow3D(true);
-    }
+    // Try canvas first, fall back to CSS if it fails
+    const timer = setTimeout(() => {
+      setUseCanvas(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!show3D) {
-    return <FallbackBackground />;
+  if (!useCanvas) {
+    return <Simple3DBackground />;
   }
 
-  return (
-    <CanvasErrorBoundary>
-      <Canvas
-        camera={{ 
-          position: [0, 0, 30], 
-          fov: 60,
-          near: 1,
-          far: 1000 
-        }}
-        style={{ background: 'transparent' }}
-        gl={{ antialias: false, alpha: true }}
-      >
-        {/* Lighting */}
-        <ambientLight intensity={0.5} color="#ffffff" />
-        <directionalLight 
-          position={[10, 10, 10]} 
-          intensity={0.3} 
-          color="#2FA6A0" 
-        />
-        <directionalLight 
-          position={[-10, -10, -10]} 
-          intensity={0.3} 
-          color="#C9A96E" 
-        />
-        <pointLight position={[20, 20, 20]} color="#2FA6A0" intensity={0.5} />
-        <pointLight position={[-20, -20, -20]} color="#C9A96E" intensity={0.5} />
-
-        {/* Environment for reflections */}
-        <Environment preset="city" />
-
-        {/* 5 Floating Shapes - positioned behind UI */}
-        <Suspense fallback={null}>
-          <TorusKnotShape 
-            position={[15, 8, -15]} 
-            color="#2FA6A0" 
-            size={2}
-          />
-          <IcosahedronShape 
-            position={[-12, -6, -20]} 
-            color="#C9A96E" 
-            size={1.5}
-          />
-          <OctahedronShape 
-            position={[10, -10, -18]} 
-            color="#1B3A5C" 
-            size={1.2}
-          />
-          <TetrahedronShape 
-            position={[-8, 12, -12]} 
-            color="#2FA6A0" 
-            size={1}
-          />
-          <DodecahedronShape 
-            position={[5, -15, -25]} 
-            color="#C9A96E" 
-            size={1.3}
-          />
-        </Suspense>
-
-        {/* Disable orbit controls - we want fixed camera */}
-        <OrbitControls 
-          enabled={false}
-          enableZoom={false}
-          enablePan={false}
-          enableRotate={false}
-        />
-      </Canvas>
-    </CanvasErrorBoundary>
-  );
+  return <Canvas3D />;
 }
 
-// Memoized version for performance
 export default Background3D;
