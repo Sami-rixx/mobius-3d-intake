@@ -24,6 +24,16 @@ function init() {
       validateAndUpdateButton();
     }
   });
+  
+  // Listen for validation requests from main.js
+  window.addEventListener('validateStep', (e) => {
+    if (e.detail.step === 3) {
+      const errors = validateStep();
+      if (errors.length > 0) {
+        e.preventDefault();
+      }
+    }
+  });
 }
 
 // Get subjects from state
@@ -287,18 +297,15 @@ function render() {
 // Update visual state of priority chips based on radio selection
 function updatePriorityChipStates() {
   document.querySelectorAll('.priority-radio-group').forEach(group => {
-    const radio = group.querySelector('input[type="radio"]:checked');
-    if (radio) {
-      // Remove selected class from all chips in this group
-      group.querySelectorAll('.priority-chip').forEach(chip => {
-        chip.classList.remove('selected');
-      });
-      // Add selected class to the checked chip
-      const checkedLabel = group.querySelector(`label[for="${radio.id}"]`) || radio.closest('label');
-      if (checkedLabel) {
-        checkedLabel.classList.add('selected');
+    const radios = group.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+      const label = radio.closest('label');
+      if (radio.checked) {
+        label.classList.add('selected');
+      } else {
+        label.classList.remove('selected');
       }
-    }
+    });
   });
 }
 
@@ -549,12 +556,6 @@ function validateAndUpdateButton() {
       nextBtn.title = '';
     }
   }
-  
-  // Dispatch validation event for main.js
-  const event = new CustomEvent('validateStep', { 
-    detail: { step: 3, valid: errors.length === 0 } 
-  });
-  window.dispatchEvent(event);
 }
 
 // Escape HTML to prevent XSS

@@ -35,6 +35,16 @@ function init() {
       validateAndUpdateButton();
     }
   });
+  
+  // Listen for validation requests from main.js
+  window.addEventListener('validateStep', (e) => {
+    if (e.detail.step === 2) {
+      const errors = validateStep();
+      if (errors.length > 0) {
+        e.preventDefault();
+      }
+    }
+  });
 }
 
 // Get applicable grades for a subject (respecting N/A exclusions)
@@ -351,12 +361,6 @@ function validateAndUpdateButton() {
       nextBtn.title = '';
     }
   }
-  
-  // Dispatch validation event for main.js
-  const event = new CustomEvent('validateStep', { 
-    detail: { step: 2, valid: errors.length === 0 } 
-  });
-  window.dispatchEvent(event);
 }
 
 // Escape HTML to prevent XSS
