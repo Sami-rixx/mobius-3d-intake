@@ -1,0 +1,315 @@
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:focus {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent-teal);
+  color: #000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #248a84;
+}
+
+.btn-secondary {
+  background-color: rgba(47, 166, 160, 0.2);
+  color: var(--accent-teal);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(47, 166, 160, 0.4);
+}
+
+.btn-danger {
+  background-color: var(--accent-gold);
+  color: #000;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #b89a5f;
+}
+
+/* Cards */
+.card {
+  background-color: rgba(27, 58, 92, 0.3);
+  border: 1px solid rgba(47, 166, 160, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:focus-within {
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 2px rgba(47, 166, 160, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card:hover {
+    transform: translateY(-2px) rotateX(2deg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Form inputs */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-body);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(47, 166, 160, 0.3);
+  border-radius: 6px;
+  background-color: rgba(14, 27, 46, 0.5);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 2px rgba(47, 166, 160, 0.3);
+}
+
+.form-input::placeholder {
+  color: rgba(215, 222, 231, 0.5);
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Chips */
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(47, 166, 160, 0.3);
+  border-radius: 20px;
+  background-color: transparent;
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.chip:focus {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 1px;
+}
+
+.chip.selected {
+  background-color: var(--accent-teal);
+  color: #000;
+  border-color: var(--accent-teal);
+}
+
+.chip.priority-preferred {
+  background-color: var(--accent-teal);
+  color: #000;
+  border-color: var(--accent-teal);
+}
+
+.chip.priority-normal {
+  background-color: rgba(215, 222, 231, 0.3);
+  color: var(--text-body);
+  border-color: rgba(215, 222, 231, 0.5);
+}
+
+.chip.priority-last-resort {
+  background-color: var(--accent-gold);
+  color: #000;
+  border-color: var(--accent-gold);
+}
+
+.chip.code {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+/* Toggle chips (for Yes/No, boolean toggles) */
+.toggle-chip {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(47, 166, 160, 0.3);
+  border-radius: 20px;
+  background-color: transparent;
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-chip.selected {
+  background-color: var(--accent-teal);
+  color: #000;
+  border-color: var(--accent-teal);
+}
+
+.toggle-chip:focus {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 1px;
+}
+
+/* Subject/Teacher tables */
+.table-like {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-like th,
+.table-like td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(47, 166, 160, 0.1);
+}
+
+.table-like th {
+  font-weight: 600;
+  color: var(--muse-blue);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-like td {
+  font-size: 0.875rem;
+}
+
+/* Grade grid for capabilities/preferences */
+.grade-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.grade-chip {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(47, 166, 160, 0.3);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--text-body);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.grade-chip:focus {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: -1px;
+}
+
+.grade-chip.selected {
+  background-color: var(--accent-teal);
+  color: #000;
+  border-color: var(--accent-teal);
+}
+
+/* Error messages */
+.error-message {
+  color: #ff6b6b;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(255, 107, 107, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* Validation summary */
+.validation-summary {
+  background-color: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.validation-summary h3 {
+  margin: 0 0 0.5rem 0;
+  color: #ff6b6b;
+  font-size: 0.875rem;
+}
+
+.validation-summary ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.75rem;
+}
+
+.validation-summary li {
+  margin-bottom: 0.25rem;
+}
+
+/* Success message */
+.success-message {
+  background-color: rgba(47, 166, 160, 0.1);
+  border: 1px solid rgba(47, 166, 160, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: var(--accent-teal);
+  font-size: 0.875rem;
+}
+
+/* Output actions */
+.output-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card:hover,
+  .btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

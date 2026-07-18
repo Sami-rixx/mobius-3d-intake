@@ -1,123 +1,148 @@
-# Mobius 3D Intake
+# Möbius Muse Blueprint — Data Intake
 
-A mobile-first, 3D-styled web intake form that replaces a 12-page PDF. Built with React + Vite + Three.js + Tailwind CSS.
+A mobile-first web form that replaces a 12-page fillable PDF used to collect Kenyan private school data (CBC curriculum). This is the first stage of the pipeline:
+
+**Web Intake Form → Blueprint Gatechecker → Workload Balancer**
 
 ## Features
 
-- **3D Aesthetic**: Floating cards, depth layers, subtle parallax, glassmorphism
-- **Mobile-First**: Touch-optimized, no hover dependencies, large tap targets
-- **Multi-Step Form**: 4-step wizard with validation
-- **Gatechecker Schema**: Exact field names (teacher_name, subject_code, etc.)
-- **JSON Output**: Generates canonical JSON payload matching the Gatechecker schema
-- **Vercel-Ready**: Static build for easy deployment
+- **3-step data entry flow**: School & Policy → Subjects → Teachers
+- **Mobile-first design**: Optimized for phone browsers with tap targets ≥44px
+- **Accessible**: Respects `prefers-reduced-motion`, keyboard navigation, visible focus states
+- **No build step**: Plain HTML + CSS + vanilla JS (ES modules)
+- **Static site**: Deployable to Vercel or any static hosting
 
-## Tech Stack
+## Quick Start
 
-- **Frontend**: React 18 + Vite
-- **3D Graphics**: Three.js + @react-three/fiber + @react-three/drei
-- **Styling**: Tailwind CSS
-- **Deployment**: Vercel
+### Local Development
 
-## Getting Started
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Sami-rixx/mobius-3d-intake.git
+   cd mobius-3d-intake
+   ```
 
-### Installation
+2. Open `index.html` in your browser:
+   ```bash
+   # Option 1: Direct file open
+   open index.html
+   
+   # Option 2: Simple Python server
+   python3 -m http.server 8000
+   # Then open http://localhost:8000
+   
+   # Option 3: Node.js http-server
+   npx http-server
+   # Then open http://localhost:8080
+   ```
 
-```bash
-npm install
+### Deployment to Vercel
+
+1. Import the repository into Vercel
+2. Select framework preset: **Other**
+3. No build command needed
+4. Output directory: (leave blank, files are at repo root)
+5. Deploy!
+
+## Project Structure
+
+```
+mobius-3d-intake/
+  index.html              # Main HTML shell
+  /css
+    tokens.css           # Brand variables
+    layout.css           # Layout styles
+    components.css       # Component styles (chips, cards, buttons)
+  /js
+    main.js              # Boot + step router
+    state.js             # In-memory form state
+    schema.js            # Payload builder + validator
+    step1-school-policy.js
+    step2-subjects.js
+    step3-teachers.js
+    output.js            # Download/copy/submit actions
+  /assets
+    mobius-mark.svg      # Animated brand mark
+  PROGRESS.md
+  README.md
 ```
 
-### Development
+## Data Contract
 
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Build
-
-```bash
-npm run build
-```
-
-### Deploy to Vercel
-
-1. Push to GitHub
-2. Import project in Vercel
-3. Deploy!
-
-## Form Structure
-
-The form is divided into 4 steps:
-
-### Step 1: Personal Information
-- `teacher_name` (required)
-- `email` (required)
-- `phone` (required)
-
-### Step 2: School Information
-- `school_name` (required)
-- `school_address` (required)
-- `school_city` (required)
-- `school_state` (required)
-- `school_zip` (required)
-- `school_country`
-
-### Step 3: Subject Information
-- `subject_code` (required)
-- `subject_name` (required)
-- `grade_level` (required)
-
-### Step 4: Class Information
-- `class_period` (required)
-- `class_size` (required)
-- `class_duration`
-- `preferred_contact_method`
-- `special_requirements`
-- `notes`
-
-## JSON Output
-
-The form generates a JSON payload with the following structure:
+The form outputs a JSON payload matching the exact schema validated by Gatechecker:
 
 ```json
 {
-  "teacher_name": "string",
-  "email": "string",
-  "phone": "string",
-  "school_name": "string",
-  "school_address": "string",
-  "school_city": "string",
-  "school_state": "string",
-  "school_zip": "string",
-  "school_country": "string",
-  "subject_code": "string",
-  "subject_name": "string",
-  "grade_level": "string",
-  "class_period": "string",
-  "class_size": "string",
-  "class_duration": "string",
-  "special_requirements": "string",
-  "preferred_contact_method": "string",
-  "notes": "string",
-  "submission_date": "ISO 8601 string",
-  "form_version": "1.0.0"
+  "schema_version": "1.0.0",
+  "school": { "name": "...", "filled_by": "...", "filled_at": "..." },
+  "policy": {
+    "generalists_grade_scope": "explicit_only",
+    "overload_policy": "block",
+    "ambiguous_data_policy": "use_default_and_warn",
+    "specialist_scope_lock": true
+  },
+  "subjects": [
+    {
+      "subject_code": "...",
+      "subject_name": "...",
+      "grade_levels": [...],
+      "periods_per_week": [...],
+      "double_lessons_allowed": true
+    }
+  ],
+  "teachers": [
+    {
+      "teacher_id": "...",
+      "teacher_name": "...",
+      "max_periods_week": 0,
+      "specialist": false,
+      "confidence": 1.0,
+      "flag_note": null
+    }
+  ],
+  "capabilities": [
+    { "teacher_id": "...", "subject_code": "...", "grades_can_teach": [...] }
+  ],
+  "preferences": [
+    {
+      "teacher_id": "...",
+      "subject_code": "...",
+      "grades": [...],
+      "priority": 2,
+      "granularity": "subject_level"
+    }
+  ]
 }
 ```
 
-## Mobile Optimization
+## Known Bug Traps (Validated)
 
-- Large touch targets (minimum 48x48px)
-- No hover-dependent interactions
-- Responsive design with mobile-first approach
-- Optimized for touch input
+1. **N/A grade-band exclusion**: When a grade band doesn't apply to a subject (e.g., Science & Technology is N/A for Jr. School), that band is **completely absent** from `grade_levels`/`periods_per_week` — never included with `0` periods.
 
-## 3D Features
+2. **Field naming**: Uses `teacher_name`, never `name` for teacher objects.
 
-- Floating 3D background with geometric shapes
-- Glassmorphism cards with depth
-- Subtle parallax effects
-- Smooth animations and transitions
+## Brand System
+
+- **Möbius Blue**: `#1B3A5C` (headers, nav, trust elements)
+- **Accent Teal**: `#2FA6A0` (primary actions, success)
+- **Accent Gold**: `#C9A96E` (warnings, last resort)
+- **Night Background**: `#0E1B2E` (app shell)
+- **Text Body**: `#D7DEE7` (high-contrast grey)
+
+## Browser Support
+
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
+- Mobile browsers (iOS Safari, Chrome for Android)
+
+## Contributing
+
+1. Read `PROGRESS.md` for current build status
+2. Follow the existing folder structure and naming conventions
+3. Keep modules small and single-purpose
+4. Test on real mobile devices, not just emulators
+5. Commit after every meaningfully complete unit of work
 
 ## License
 
