@@ -4,6 +4,7 @@ import Background3D from './components/Background3D';
 import Stepper from './components/Stepper';
 import Step1 from './steps/Step1';
 import Step2 from './steps/Step2';
+import Step3 from './steps/Step3';
 import { FormProvider } from './hooks/useFormContext';
 
 function App() {
@@ -65,20 +66,7 @@ function App() {
                 <Step2 onContinue={handleNextStep} onBack={handlePrevStep} />
               )}
               {currentStep === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h2 className="text-3xl font-bold text-white mb-6 text-center">
-                    Step 3: Teachers
-                  </h2>
-                  <p className="text-center text-white/60 mb-8">
-                    Coming in Milestone 3
-                  </p>
-                </motion.div>
+                <Step3 onContinue={handleNextStep} onBack={handlePrevStep} />
               )}
               {currentStep === 4 && (
                 <motion.div
@@ -99,37 +87,23 @@ function App() {
             </AnimatePresence>
 
             {/* Navigation Buttons (fallback for steps without their own navigation) */}
-            {currentStep > 2 && (
+            {currentStep === 4 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="flex gap-4 mt-8"
               >
-                {currentStep > 1 && (
-                  <motion.button
-                    type="button"
-                    onClick={handlePrevStep}
-                    className="glass-button flex-1 py-4 text-lg font-semibold"
-                    style={{ background: 'linear-gradient(135deg, #4A5568 0%, #2D3748 100%)' }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98, y: 0 }}
-                  >
-                    ← Back
-                  </motion.button>
-                )}
-                
-                {currentStep < 4 && (
-                  <motion.button
-                    type="button"
-                    onClick={handleNextStep}
-                    className="glass-button flex-1 py-4 text-lg font-semibold"
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98, y: 0 }}
-                  >
-                    Continue →
-                  </motion.button>
-                )}
+                <motion.button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className="glass-button flex-1 py-4 text-lg font-semibold"
+                  style={{ background: 'linear-gradient(135deg, #4A5568 0%, #2D3748 100%)' }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98, y: 0 }}
+                >
+                  ← Back
+                </motion.button>
               </motion.div>
             )}
 
