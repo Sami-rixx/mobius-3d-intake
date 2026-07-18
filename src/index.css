@@ -2,72 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    @apply bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen text-white font-sans;
-  }
+/* Custom styles for Möbius Muse */
+
+/* Glassmorphism effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-glass-dark backdrop-blur-xl rounded-2xl border border-glass-border shadow-2xl;
-  }
-  
-  .glass-input {
-    @apply bg-glass-light backdrop-blur-md rounded-xl border border-glass-border px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
-  }
-  
-  .glass-button {
-    @apply bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  
-  .floating-animation {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  .glow-animation {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  outline: none;
 }
 
-@layer utilities {
-  .text-glow {
-    text-shadow: 0 0 10px rgba(2, 132, 199, 0.5);
-  }
-  
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
+.glass-input:focus {
+  border-color: #2FA6A0;
+  box-shadow: 0 0 0 3px rgba(47, 166, 160, 0.2);
 }
 
-/* Custom scrollbar */
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.glass-button {
+  background: linear-gradient(135deg, #2FA6A0 0%, #209A96 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(47, 166, 160, 0.3);
+  touch-action: manipulation;
+}
+
+.glass-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(47, 166, 160, 0.4);
+}
+
+.glass-button:active {
+  transform: translateY(0);
+}
+
+.glass-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Text glow effect */
+.text-glow {
+  text-shadow: 0 0 20px rgba(47, 166, 160, 0.5);
+}
+
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-800;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary-600 rounded-full;
+  background: rgba(47, 166, 160, 0.5);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-500;
+  background: rgba(47, 166, 160, 0.7);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(47, 166, 160, 0.3);
+  color: white;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid #2FA6A0;
+  outline-offset: 2px;
+}
+
+/* Mobile touch targets */
+button,
+input,
+select,
+textarea {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Prevent text selection on buttons */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }
 
 /* Hide scrollbar for mobile */
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
     display: none;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "mobius-3d-intake",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,9 @@
     "react-dom": "^18.3.1",
     "three": "^0.172.0",
     "@react-three/fiber": "^8.17.10",
-    "@react-three/drei": "^9.112.0"
+    "@react-three/drei": "^9.112.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.453.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
