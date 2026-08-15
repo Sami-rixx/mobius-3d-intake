@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/canonical-intake-regression.mjs",
+    "check": "node --check js/schema.js && node --check js/config.js && node --check js/numbers.js && node --check js/subject-relations.js && node --check js/step1-school-policy.js && node --check js/step2-subjects.js && node --check js/step3-teachers.js"
+  }
+}

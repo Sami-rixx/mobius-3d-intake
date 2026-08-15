@@ -245,3 +245,19 @@ The current implementation emits a seven-key JSON object: `schema_version`, `sch
 - Its input schema (raw intake versus GateChecker output) and a representative accepted input/output fixture.
 - Exact demand, capacity, eligibility, priority, specialist, overload, ambiguity, double-lesson, grade, and timetable constraints it consumes.
 - Identifier/reference semantics, ordering assumptions, required cardinalities, and behavior for incomplete/ambiguous data.
+
+## 13. Phase 1 hardening note
+
+This section records the locally justified implementation decisions made after the audit above. The preceding sections remain evidence of the source as inspected at audit time.
+
+### OBSERVED FACTS
+
+- Step 2's applicable-grade UI and `NA_EXCLUSIONS` both exclude SCI Grade 10, while the prior final validator did not. Final validation is aligned to that same local configuration; this is an internal-consistency change only.
+- The number inputs advertise periods/week `1`–`20` and teacher maximum periods/week `0`–`100`. Final validation now enforces those integer bounds.
+- Capability and preference records are explicitly built from a teacher ID and subject code selected from the current in-memory arrays. Their references and relation pairs are therefore validated within the payload; this does not assert a cross-session/global ID rule.
+
+### UNKNOWN / DECISION REQUIRED FOR A LATER PHASE
+
+- The repository does not establish whether its hard-coded SCI/INTSCI/PRETECH exclusions are correct external curriculum or downstream rules. Phase 1 only removes the discrepancy between the UI and local final validator.
+- The repository does not establish whether an empty capability record means something different from no record, or whether omitting a preference differs from an explicit Normal preference. Phase 1 preserves both representations.
+- The repository does not establish a downstream date format beyond a nonempty date value. Phase 1 stops build-time date fabrication and leaves a missing date explicit for existing validation to reject.

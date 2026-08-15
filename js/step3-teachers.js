@@ -2,6 +2,7 @@
 import { getState, updateState } from './state.js';
 import { navigateToStep } from './main.js';
 import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS, PRIORITY_MAP, PRIORITY_VALUES } from './config.js';
+import { parseNumericInput } from './numbers.js';
 
 // DOM elements
 const stepContainer = document.getElementById('step-3');
@@ -334,7 +335,7 @@ function setupEventListeners() {
     el.addEventListener('input', (e) => {
       const id = e.target.id;
       const index = parseInt(id.split('-')[2]);
-      const value = parseInt(e.target.value) || 0;
+      const value = parseNumericInput(e.target.value);
       const newState = getState();
       newState.teachers[index].max_periods_week = value;
       updateState(newState);
@@ -510,8 +511,8 @@ function validateStep() {
       errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): uses 'name' instead of 'teacher_name' - this is a known bug`);
     }
     
-    if (typeof teacher.max_periods_week !== 'number') {
-      errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): Max periods/week must be a number`);
+    if (!Number.isInteger(teacher.max_periods_week) || teacher.max_periods_week < 0 || teacher.max_periods_week > 100) {
+      errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): Max periods/week must be a whole number from 0 to 100`);
     }
     
     if (typeof teacher.specialist !== 'boolean') {

@@ -19,6 +19,16 @@ export const NA_EXCLUSIONS = {
   PRETECH: { excluded_bands: ['UPPER_PRIMARY'] } // Pre-Technical
 };
 
+// Default subjects shown when a new intake begins.
+export const SEED_SUBJECTS = [
+  { subject_code: 'ENG', subject_name: 'English', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'MATH', subject_name: 'Mathematics', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'AGRI', subject_name: 'Agriculture & Nutrition', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [3, 3, 3, 3, 3, 3, 3], double_lessons_allowed: false },
+  { subject_code: 'SCI', subject_name: 'Science & Technology', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY], periods_per_week: [4, 4, 4], double_lessons_allowed: true },
+  { subject_code: 'INTSCI', subject_name: 'Integrated Science', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5], double_lessons_allowed: true },
+  { subject_code: 'PRETECH', subject_name: 'Pre-Technical', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [4, 4, 4, 4], double_lessons_allowed: true }
+];
+
 // Priority mapping
 export const PRIORITY_MAP = {
   preferred: 1,
