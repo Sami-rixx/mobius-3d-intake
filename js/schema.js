@@ -1,5 +1,5 @@
 // Canonical payload builder and validator
-import { GRADE_BANDS, NA_EXCLUSIONS } from './config.js';
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS } from './config.js';
 
 /**
  * Builds the exact payload from the current state
@@ -156,6 +156,14 @@ export function validatePayload(payload) {
             errors.push(`Subject ${index + 1} (${subject.subject_code}): periods_per_week must contain numbers, got ${typeof subject.periods_per_week[i]}`);
           }
         }
+        
+        // Validate grade values are within the school grade range
+        for (let i = 0; i < subject.grade_levels.length; i++) {
+          const grade = subject.grade_levels[i];
+          if (typeof grade === "number" && !SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
+          }
+        }
       }
       
       if (typeof subject.double_lessons_allowed !== "boolean") {
@@ -199,6 +207,8 @@ export function validatePayload(payload) {
       
       if (typeof teacher.confidence !== "number") {
         errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): confidence must be a number`);
+      } else if (teacher.confidence < 0 || teacher.confidence > 1) {
+        errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): confidence must be a number between 0 and 1`);
       }
       
       if (teacher.flag_note !== null && typeof teacher.flag_note !== "string") {
@@ -229,6 +239,16 @@ export function validatePayload(payload) {
       
       if (!cap.grades_can_teach || !Array.isArray(cap.grades_can_teach)) {
         errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grades_can_teach must be an array`);
+      } else {
+        // Validate grade elements in capabilities
+        for (let i = 0; i < cap.grades_can_teach.length; i++) {
+          const grade = cap.grades_can_teach[i];
+          if (typeof grade !== "number") {
+            errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grades_can_teach must contain numbers, got ${typeof grade}`);
+          } else if (!SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
+          }
+        }
       }
     });
   }
@@ -248,6 +268,16 @@ export function validatePayload(payload) {
       
       if (!pref.grades || !Array.isArray(pref.grades)) {
         errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grades must be an array`);
+      } else {
+        // Validate grade elements in preferences
+        for (let i = 0; i < pref.grades.length; i++) {
+          const grade = pref.grades[i];
+          if (typeof grade !== "number") {
+            errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grades must contain numbers, got ${typeof grade}`);
+          } else if (!SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
+          }
+        }
       }
       
       if (![1, 2, 3].includes(pref.priority)) {
@@ -265,6 +295,11 @@ export function validatePayload(payload) {
   if (Array.isArray(payload.teachers) && Array.isArray(payload.subjects)) {
     const teacherIds = new Set(payload.teachers.map(teacher => teacher.teacher_id));
     const subjectCodes = new Set(payload.subjects.map(subject => subject.subject_code));
+    const subjectGradeMap = new Map();
+    payload.subjects.forEach(subj => {
+      subjectGradeMap.set(subj.subject_code, new Set(subj.grade_levels || []));
+    });
+    
     const validateRelations = (relations, relationName) => {
       if (!Array.isArray(relations)) return;
 
@@ -276,6 +311,17 @@ export function validatePayload(payload) {
         }
         if (!subjectCodes.has(relation.subject_code)) {
           errors.push(`${label}: references an unknown subject_code`);
+        }
+        
+        // Validate grades in relation are applicable to the subject
+        const subjectGrades = subjectGradeMap.get(relation.subject_code);
+        if (subjectGrades) {
+          const gradesToCheck = relation.grades_can_teach || relation.grades || [];
+          for (const grade of gradesToCheck) {
+            if (typeof grade === "number" && !subjectGrades.has(grade)) {
+              errors.push(`${label}: grade ${grade} is not in the subject's grade_levels [${Array.from(subjectGrades).sort((a,b) => a-b).join(", ")}]`);
+            }
+          }
         }
 
         const pair = JSON.stringify([relation.teacher_id, relation.subject_code]);

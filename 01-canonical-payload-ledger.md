@@ -261,3 +261,48 @@ This section records the locally justified implementation decisions made after t
 - The repository does not establish whether its hard-coded SCI/INTSCI/PRETECH exclusions are correct external curriculum or downstream rules. Phase 1 only removes the discrepancy between the UI and local final validator.
 - The repository does not establish whether an empty capability record means something different from no record, or whether omitting a preference differs from an explicit Normal preference. Phase 1 preserves both representations.
 - The repository does not establish a downstream date format beyond a nonempty date value. Phase 1 stops build-time date fabrication and leaves a missing date explicit for existing validation to reject.
+
+## 14. Phase 2 hardening note
+
+Phase 2 addresses **internally verifiable integrity gaps** identified in Section 10.2 (No relational integrity) and Section 10.3 (Silent/default normalization). All changes are based on evidence from the current codebase and audit ledger, without inferring unknown GateChecker or Workload Balancer contract requirements.
+
+### OBSERVED FACTS ADDRESSED
+
+- **Grade range validation**: The school grade range is explicitly defined as `[4, 5, 6, 7, 8, 9, 10]` in `js/config.js:6`. Final validation now enforces that all grade values in `subjects.grade_levels`, `capabilities.grades_can_teach`, and `preferences.grades` fall within this range.
+- **Grade applicability**: Capability and preference records reference subjects by `subject_code`. Their grade arrays (`grades_can_teach` and `grades`) must be subsets of the referenced subject's `grade_levels` array. Final validation now checks this relationship, catching stale data from subject grade edits.
+- **Confidence range**: The `confidence` field is a numeric value defaulting to `1.0` (line 39 of schema.js). Phase 2 adds validation that confidence must be between 0 and 1 (inclusive), preventing nonsensical values.
+- **Grade type validation**: Capability and preference grade arrays now validate that each element is a number, preventing string or null values from passing validation.
+
+### STRUCTURAL DECISIONS
+
+- **Empty arrays still accepted**: Following Phase 1's decision to preserve both representations (empty relation arrays vs no relation record), Phase 2 does not require capability/preference grade arrays to be non-empty.
+- **No cascading updates**: The UI does not automatically update capability/preference grades when subject grades change. Phase 2 detects this mismatch at validation time rather than preventing it at edit time, preserving the existing UI behavior while catching the data integrity issue.
+- **Confidence as 0-1 range**: The range [0, 1] is chosen as a reasonable interpretation for a confidence score. This is an internal consistency decision; the actual GateChecker/Workload Balancer interpretation remains UNKNOWN.
+
+### NEW VALIDATION RULES (schema.js)
+
+| Field | Validation | Evidence | Ledger Reference |
+|---|---|---|---|
+| `subjects[].grade_levels[]` | Each grade must be in `SCHOOL_GRADE_RANGE` | `js/config.js:6` | Lines 82, 86 |
+| `capabilities[].grades_can_teach[]` | Each grade must be a number in `SCHOOL_GRADE_RANGE` | `js/config.js:6`, ledger line 82 | Line 82 |
+| `preferences[].grades[]` | Each grade must be a number in `SCHOOL_GRADE_RANGE` | `js/config.js:6`, ledger line 86 | Line 86 |
+| `capabilities[].grades_can_teach[]` | Each grade must exist in referenced subject's `grade_levels` | Ledger line 126-128 | Line 122 |
+| `preferences[].grades[]` | Each grade must exist in referenced subject's `grade_levels` | Ledger line 126-128 | Line 86 |
+| `teachers[].confidence` | Must be a number between 0 and 1 | Ledger line 77 | Line 77 |
+
+### TEST COVERAGE
+
+All Phase 2 validations are covered by explicit regression tests in `tests/canonical-intake-regression.mjs`:
+- Grade range validation (lines 85-90)
+- Confidence range validation (lines 92-96)
+- Grade type validation for capabilities/preferences (lines 98-101)
+- Grade applicability validation (lines 103-123)
+
+### REMAINING ISSUES REQUIRING CONTRACT VERIFICATION
+
+The following items require actual GateChecker or Workload Balancer contract verification before they can be addressed:
+
+- **Empty relation semantics**: Whether empty `grades_can_teach` or `grades` arrays have different meaning from no relation record (ledger lines 182, 262).
+- **Normal priority structural ambiguity**: Whether omitting a preference record differs from an explicit Normal (`priority: 2`) preference (ledger lines 180-181, 262).
+- **Confidence semantics**: Whether the 0-1 range assumption is correct for downstream systems (ledger line 232).
+- **Grade ordering**: Whether grade arrays must be sorted or can be in any order (ledger line 179).

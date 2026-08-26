@@ -79,4 +79,61 @@ assert.equal(renamed.capabilities[0].subject_code, 'VISART');
 assert.equal(renamed.preferences[0].subject_code, 'VISART');
 assert.deepEqual(validatePayload(buildPayload(renamed)), []);
 
-console.log('canonical intake regression tests passed');
+// Phase 2: Grade range validation
+console.log('\n--- Phase 2 Tests ---');
+console.log('Testing grade range validation...');
+expectInvalid(state => { state.subjects[0].grade_levels = [3]; state.subjects[0].periods_per_week = [5]; }, 'grade 3 is outside valid range 4-10');
+expectInvalid(state => { state.subjects[0].grade_levels = [11]; state.subjects[0].periods_per_week = [5]; }, 'grade 11 is outside valid range 4-10');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [3]; }, 'capability grade 3 is outside valid range');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [11]; }, 'capability grade 11 is outside valid range');
+expectInvalid(state => { state.preferences[0].grades = [3]; }, 'preference grade 3 is outside valid range');
+expectInvalid(state => { state.preferences[0].grades = [11]; }, 'preference grade 11 is outside valid range');
+
+// Phase 2: Confidence range validation
+console.log('Testing confidence range validation...');
+expectInvalid(state => { state.teachers[0].confidence = -0.1; }, 'confidence below 0 must be rejected');
+expectInvalid(state => { state.teachers[0].confidence = 1.1; }, 'confidence above 1 must be rejected');
+assert.deepEqual(errorsFor(state => { state.teachers[0].confidence = 0; }), [], 'confidence of 0 is valid');
+assert.deepEqual(errorsFor(state => { state.teachers[0].confidence = 1; }), [], 'confidence of 1 is valid');
+assert.deepEqual(errorsFor(state => { state.teachers[0].confidence = 0.5; }), [], 'confidence of 0.5 is valid');
+
+// Phase 2: Grade type validation in capabilities and preferences
+console.log('Testing grade type validation...');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = ['4']; }, 'capability grades must be numbers');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [null]; }, 'capability grades must be numbers');
+expectInvalid(state => { state.preferences[0].grades = ['4']; }, 'preference grades must be numbers');
+expectInvalid(state => { state.preferences[0].grades = [null]; }, 'preference grades must be numbers');
+
+// Phase 2: Grade applicability validation (stale data detection)
+console.log('Testing grade applicability validation...');
+// Capability references a grade not in the subject's grade_levels
+expectInvalid(state => {
+  state.subjects[0].grade_levels = [4, 5];
+  state.subjects[0].periods_per_week = [5, 5];
+  state.capabilities[0].grades_can_teach = [4, 6]; // 6 is not in subject grades
+}, 'capability with grade not in subject grade_levels must be rejected');
+
+// Preference references a grade not in the subject's grade_levels
+expectInvalid(state => {
+  state.subjects[0].grade_levels = [4, 5];
+  state.subjects[0].periods_per_week = [5, 5];
+  state.preferences[0].grades = [4, 6]; // 6 is not in subject grades
+}, 'preference with grade not in subject grade_levels must be rejected');
+
+// Valid: capability grades are subset of subject grades
+assert.deepEqual(errorsFor(state => {
+  state.subjects[0].grade_levels = [4, 5, 6];
+  state.subjects[0].periods_per_week = [5, 5, 5];
+  state.capabilities[0].grades_can_teach = [4, 5];
+  state.preferences[0].grades = [4, 5];
+}), [], 'capability and preference grades that are subset of subject grades are valid');
+
+// Valid: capability grades exactly match subject grades
+assert.deepEqual(errorsFor(state => {
+  state.subjects[0].grade_levels = [4, 5];
+  state.subjects[0].periods_per_week = [5, 5];
+  state.capabilities[0].grades_can_teach = [4, 5];
+  state.preferences[0].grades = [4, 5];
+}), [], 'capability and preference grades matching subject grades are valid');
+
+console.log('\ncanonical intake regression tests passed (Phase 1 + Phase 2)');
