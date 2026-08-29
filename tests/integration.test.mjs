@@ -54,7 +54,7 @@ const mobiusState = {
   },
   subjects: [
     { subject_code: 'MATH', subject_name: 'Mathematics', grade_levels: [7, 8, 9], periods_per_week: [5, 5, 5], double_lessons_allowed: true },
-    { subject_code: 'ENG', subject_name: 'English', grade_levels: [7, 8, 9], periods_per_week: [5, 5, 5], double_lessons_allowed: true },
+    { subject_code: 'ENG', subject_name: 'English', grade_levels: [4, 5, 6, 7, 8, 9], periods_per_week: [5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
   ],
   teachers: [
     { teacher_id: 'T1', teacher_name: 'Mr. Otieno', max_periods_week: 24, specialist: false, confidence: 0.95 },
@@ -62,12 +62,12 @@ const mobiusState = {
   ],
   capabilities: [
     { teacher_id: 'T1', subject_code: 'MATH', grades_can_teach: [7, 8, 9] },
-    { teacher_id: 'T1', subject_code: 'ENG', grades_can_teach: [7, 8, 9] },
+    { teacher_id: 'T1', subject_code: 'ENG', grades_can_teach: [4, 5, 6, 7, 8, 9] },
     { teacher_id: 'T2', subject_code: 'MATH', grades_can_teach: [7, 8, 9] },
   ],
   preferences: [
     { teacher_id: 'T1', subject_code: 'MATH', grades: [7, 8, 9], priority: 1, granularity: 'subject_level' },
-    { teacher_id: 'T1', subject_code: 'ENG', grades: [7, 8, 9], priority: 1, granularity: 'subject_level' },
+    { teacher_id: 'T1', subject_code: 'ENG', grades: [4, 5, 6, 7, 8, 9], priority: 1, granularity: 'subject_level' },
   ],
 };
 

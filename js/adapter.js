@@ -16,8 +16,8 @@
 
 import { SCHOOL_GRADE_RANGE } from './config.js';
 
-// Valid grade range for Möbius intake
-const VALID_GRADES = new Set(SCHOOL_GRADE_RANGE); // [4, 5, 6, 7, 8, 9, 10]
+// Valid grade range for Möbius intake (G4-G9: Upper Primary + Junior Secondary)
+const VALID_GRADES = new Set(SCHOOL_GRADE_RANGE); // [4, 5, 6, 7, 8, 9]
 
 /**
  * Validates that a grade is a valid numeric grade in the Möbius system
@@ -482,7 +482,7 @@ export function canTransform(mobiusPayload) {
 
 /**
  * Returns the canonical string representation of a numeric grade
- * @param {number} grade - Numeric grade (4-10)
+ * @param {number} grade - Numeric grade (4-9)
  * @returns {string} Canonical grade string (e.g., "G4")
  */
 export function gradeToCanonical(grade) {

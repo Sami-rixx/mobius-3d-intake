@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { SEED_SUBJECTS } from '../js/config.js';
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, SEED_SUBJECTS } from '../js/config.js';
 import { parseNumericInput } from '../js/numbers.js';
 import { renameSubjectCode } from '../js/subject-relations.js';
 import { buildPayload, validatePayload } from '../js/schema.js';
@@ -67,10 +67,10 @@ expectInvalid(state => { state.capabilities.push({ ...state.capabilities[0] }); 
 expectInvalid(state => { state.preferences.push({ ...state.preferences[0] }); }, 'duplicate preference pairs must be rejected');
 
 expectInvalid(state => {
-  state.subjects = [{ subject_code: 'SCI', subject_name: 'Science & Technology', grade_levels: [4, 10], periods_per_week: [4, 4], double_lessons_allowed: true }];
+  state.subjects = [{ subject_code: 'SCI', subject_name: 'Science & Technology', grade_levels: [4, 7], periods_per_week: [4, 4], double_lessons_allowed: true }];
   state.capabilities[0].subject_code = 'SCI';
   state.preferences[0].subject_code = 'SCI';
-}, 'SCI Grade 10 must agree with the configured UI exclusion');
+}, 'SCI must NOT include grades 7-9 (JR_SCHOOL band exclusion)');
 
 const renamed = validState();
 renameSubjectCode(renamed, 0, 'VISART');
@@ -82,12 +82,15 @@ assert.deepEqual(validatePayload(buildPayload(renamed)), []);
 // Phase 2: Grade range validation
 console.log('\n--- Phase 2 Tests ---');
 console.log('Testing grade range validation...');
-expectInvalid(state => { state.subjects[0].grade_levels = [3]; state.subjects[0].periods_per_week = [5]; }, 'grade 3 is outside valid range 4-10');
-expectInvalid(state => { state.subjects[0].grade_levels = [11]; state.subjects[0].periods_per_week = [5]; }, 'grade 11 is outside valid range 4-10');
-expectInvalid(state => { state.capabilities[0].grades_can_teach = [3]; }, 'capability grade 3 is outside valid range');
-expectInvalid(state => { state.capabilities[0].grades_can_teach = [11]; }, 'capability grade 11 is outside valid range');
-expectInvalid(state => { state.preferences[0].grades = [3]; }, 'preference grade 3 is outside valid range');
-expectInvalid(state => { state.preferences[0].grades = [11]; }, 'preference grade 11 is outside valid range');
+expectInvalid(state => { state.subjects[0].grade_levels = [3]; state.subjects[0].periods_per_week = [5]; }, 'grade 3 is outside valid range 4-9');
+expectInvalid(state => { state.subjects[0].grade_levels = [10]; state.subjects[0].periods_per_week = [5]; }, 'grade 10 is outside valid range 4-9');
+expectInvalid(state => { state.subjects[0].grade_levels = [11]; state.subjects[0].periods_per_week = [5]; }, 'grade 11 is outside valid range 4-9');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [3]; }, 'capability grade 3 is outside valid range 4-9');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [10]; }, 'capability grade 10 is outside valid range 4-9');
+expectInvalid(state => { state.capabilities[0].grades_can_teach = [11]; }, 'capability grade 11 is outside valid range 4-9');
+expectInvalid(state => { state.preferences[0].grades = [3]; }, 'preference grade 3 is outside valid range 4-9');
+expectInvalid(state => { state.preferences[0].grades = [10]; }, 'preference grade 10 is outside valid range 4-9');
+expectInvalid(state => { state.preferences[0].grades = [11]; }, 'preference grade 11 is outside valid range 4-9');
 
 // Phase 2: Confidence range validation
 console.log('Testing confidence range validation...');
@@ -136,4 +139,122 @@ assert.deepEqual(errorsFor(state => {
   state.preferences[0].grades = [4, 5];
 }), [], 'capability and preference grades matching subject grades are valid');
 
-console.log('\ncanonical intake regression tests passed (Phase 1 + Phase 2)');
+// Phase 3: G4-G9 CBC grade range and seed subject tests
+console.log('\n--- Phase 3 Tests: G4-G9 CBC Grade Range ---');
+
+// Test supported grade range is exactly 4-9
+console.log('Testing supported grade range 4-9...');
+const gradeRangeTests = validState();
+gradeRangeTests.subjects = structuredClone(SEED_SUBJECTS);
+gradeRangeTests.teachers = [];
+gradeRangeTests.capabilities = [];
+gradeRangeTests.preferences = [];
+assert.deepEqual(validatePayload(buildPayload(gradeRangeTests)), [], 'SEED_SUBJECTS with G4-G9 should pass validation');
+
+// Test that G10 is rejected in subjects
+expectInvalid(state => { 
+  state.subjects[0].grade_levels = [10]; 
+  state.subjects[0].periods_per_week = [5]; 
+}, 'grade 10 must be rejected in subjects');
+
+// Test that G10 is rejected in capabilities
+expectInvalid(state => { 
+  state.capabilities[0].grades_can_teach = [10]; 
+}, 'grade 10 must be rejected in capabilities');
+
+// Test that G10 is rejected in preferences
+expectInvalid(state => { 
+  state.preferences[0].grades = [10]; 
+}, 'grade 10 must be rejected in preferences');
+
+// Test grade band configuration
+console.log('Testing grade band configuration...');
+assert.deepEqual(GRADE_BANDS.UPPER_PRIMARY, [4, 5, 6], 'UPPER_PRIMARY must be exactly [4,5,6]');
+assert.deepEqual(GRADE_BANDS.JR_SCHOOL, [7, 8, 9], 'JR_SCHOOL must be exactly [7,8,9]');
+assert.equal(Object.keys(GRADE_BANDS).length, 2, 'GRADE_BANDS must have exactly 2 bands (UPPER_PRIMARY and JR_SCHOOL)');
+
+// Test seed subject alignment
+console.log('Testing seed subject alignment...');
+SEED_SUBJECTS.forEach(subject => {
+  // Every subject must have aligned grade_levels and periods_per_week arrays
+  assert.equal(subject.grade_levels.length, subject.periods_per_week.length, 
+    `${subject.subject_code} must have aligned grade_levels and periods_per_week arrays`);
+  
+  // Every grade must be in the valid range
+  subject.grade_levels.forEach(grade => {
+    assert.ok(SCHOOL_GRADE_RANGE.includes(grade), 
+      `${subject.subject_code} grade ${grade} must be in SCHOOL_GRADE_RANGE [${SCHOOL_GRADE_RANGE.join(', ')}]`);
+  });
+  
+  // No subject should have grade 10
+  assert.ok(!subject.grade_levels.includes(10), 
+    `${subject.subject_code} must NOT include grade 10`);
+  
+  // No zero periods allowed
+  subject.periods_per_week.forEach((periods, index) => {
+    assert.ok(periods >= 1 && periods <= 20, 
+      `${subject.subject_code} grade ${subject.grade_levels[index]} periods must be 1-20`);
+  });
+});
+
+// Test that default roster is populated with complete CBC learning areas
+console.log('Testing default roster population...');
+const defaultRosterTests = validState();
+defaultRosterTests.subjects = structuredClone(SEED_SUBJECTS);
+assert.equal(defaultRosterTests.subjects.length, 6, 'Default roster should have 6 seeded subjects');
+
+// Verify specific seed subjects exist
+const seedCodes = SEED_SUBJECTS.map(s => s.subject_code);
+assert.ok(seedCodes.includes('ENG'), 'Default roster must include ENG');
+assert.ok(seedCodes.includes('MATH'), 'Default roster must include MATH');
+assert.ok(seedCodes.includes('AGRI'), 'Default roster must include AGRI');
+assert.ok(seedCodes.includes('SCI'), 'Default roster must include SCI');
+assert.ok(seedCodes.includes('INTSCI'), 'Default roster must include INTSCI');
+assert.ok(seedCodes.includes('PRETECH'), 'Default roster must include PRETECH');
+
+// Test grade-band awareness
+console.log('Testing grade-band aware subject seeding...');
+const engSubject = SEED_SUBJECTS.find(s => s.subject_code === 'ENG');
+assert.deepEqual(engSubject.grade_levels, [4, 5, 6, 7, 8, 9], 'ENG should span all grades 4-9');
+
+const sciSubject = SEED_SUBJECTS.find(s => s.subject_code === 'SCI');
+assert.deepEqual(sciSubject.grade_levels, [4, 5, 6], 'SCI should only include Upper Primary grades 4-6');
+
+const intSciSubject = SEED_SUBJECTS.find(s => s.subject_code === 'INTSCI');
+assert.deepEqual(intSciSubject.grade_levels, [7, 8, 9], 'INTSCI should only include JR_SCHOOL grades 7-9');
+
+const preTechSubject = SEED_SUBJECTS.find(s => s.subject_code === 'PRETECH');
+assert.deepEqual(preTechSubject.grade_levels, [7, 8, 9], 'PRETECH should only include JR_SCHOOL grades 7-9');
+
+// Test that editing still works (subjects can be modified)
+console.log('Testing that editing still works...');
+const editingTests = validState();
+editingTests.subjects = structuredClone(SEED_SUBJECTS);
+// Modify a seeded subject's periods
+editingTests.subjects[0].periods_per_week[0] = 6;
+// Update capabilities and preferences to reference the actual seed subjects
+editingTests.capabilities = [{ teacher_id: 'T-001', subject_code: 'ENG', grades_can_teach: [4] }];
+editingTests.preferences = [{ teacher_id: 'T-001', subject_code: 'ENG', grades: [4], priority: 2, granularity: 'subject_level' }];
+assert.deepEqual(validatePayload(buildPayload(editingTests)), [], 'Modified seeded subject periods should still pass validation');
+
+// Test that removing a seeded subject still works
+console.log('Testing that removing a seeded subject still works...');
+const removeTests = validState();
+removeTests.subjects = structuredClone(SEED_SUBJECTS);
+removeTests.subjects = removeTests.subjects.filter(s => s.subject_code !== 'AGRI');
+// Update capabilities and preferences to reference the actual seed subjects
+removeTests.capabilities = [{ teacher_id: 'T-001', subject_code: 'ENG', grades_can_teach: [4] }];
+removeTests.preferences = [{ teacher_id: 'T-001', subject_code: 'ENG', grades: [4], priority: 2, granularity: 'subject_level' }];
+assert.deepEqual(validatePayload(buildPayload(removeTests)), [], 'Removing a seeded subject should pass validation');
+
+// Test that adding a custom subject still works
+console.log('Testing that adding a custom subject still works...');
+const addTests = validState();
+addTests.subjects = structuredClone(SEED_SUBJECTS);
+addTests.subjects.push({ subject_code: 'KISW', subject_name: 'Kiswahili', grade_levels: [4, 5, 6, 7, 8, 9], periods_per_week: [5, 5, 5, 5, 5, 5], double_lessons_allowed: true });
+// Update capabilities and preferences to reference the actual subjects
+addTests.capabilities = [{ teacher_id: 'T-001', subject_code: 'KISW', grades_can_teach: [4] }];
+addTests.preferences = [{ teacher_id: 'T-001', subject_code: 'KISW', grades: [4], priority: 2, granularity: 'subject_level' }];
+assert.deepEqual(validatePayload(buildPayload(addTests)), [], 'Adding a custom subject should pass validation');
+
+console.log('\ncanonical intake regression tests passed (Phase 1 + Phase 2 + Phase 3)');

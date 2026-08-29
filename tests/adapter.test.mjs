@@ -28,8 +28,8 @@ function createValidState() {
       {
         subject_code: 'ENG',
         subject_name: 'English',
-        grade_levels: [4, 5, 6, 7, 8, 9, 10],
-        periods_per_week: [5, 5, 5, 5, 5, 5, 5],
+        grade_levels: [4, 5, 6, 7, 8, 9],
+        periods_per_week: [5, 5, 5, 5, 5, 5],
         double_lessons_allowed: true,
       },
       {
@@ -59,14 +59,14 @@ function createValidState() {
       },
     ],
     capabilities: [
-      { teacher_id: 'T-001', subject_code: 'ENG', grades_can_teach: [4, 5, 6, 7, 8, 9, 10] },
+      { teacher_id: 'T-001', subject_code: 'ENG', grades_can_teach: [4, 5, 6, 7, 8, 9] },
       { teacher_id: 'T-001', subject_code: 'MATH', grades_can_teach: [4, 5, 6] },
-      { teacher_id: 'T-002', subject_code: 'ENG', grades_can_teach: [7, 8, 9, 10] },
+      { teacher_id: 'T-002', subject_code: 'ENG', grades_can_teach: [7, 8, 9] },
     ],
     preferences: [
-      { teacher_id: 'T-001', subject_code: 'ENG', grades: [4, 5, 6, 7, 8, 9, 10], priority: 1, granularity: 'subject_level' },
+      { teacher_id: 'T-001', subject_code: 'ENG', grades: [4, 5, 6, 7, 8, 9], priority: 1, granularity: 'subject_level' },
       { teacher_id: 'T-001', subject_code: 'MATH', grades: [4, 5, 6], priority: 2, granularity: 'subject_level' },
-      { teacher_id: 'T-002', subject_code: 'ENG', grades: [7, 8, 9, 10], priority: 1, granularity: 'subject_level' },
+      { teacher_id: 'T-002', subject_code: 'ENG', grades: [7, 8, 9], priority: 1, granularity: 'subject_level' },
     ],
   };
 }
@@ -77,14 +77,14 @@ function createValidState() {
 console.log('\n=== Test 1: Grade Conversion Utilities ===');
 
 // Test gradeToCanonical with valid grades
-for (const grade of [4, 5, 6, 7, 8, 9, 10]) {
+for (const grade of [4, 5, 6, 7, 8, 9]) {
   const result = gradeToCanonical(grade);
   assert.strictEqual(result, `G${grade}`, `gradeToCanonical(${grade}) should return "G${grade}"`);
 }
 console.log('✓ gradeToCanonical: All valid grades convert correctly');
 
 // Test gradeToCanonical with invalid grades
-const invalidGrades = [3, 11, 15, 0, -1, 100, 3.5, '4', null, undefined];
+const invalidGrades = [3, 10, 11, 15, 0, -1, 100, 3.5, '4', null, undefined];
 for (const grade of invalidGrades) {
   try {
     gradeToCanonical(grade);
@@ -96,7 +96,7 @@ for (const grade of invalidGrades) {
 console.log('✓ gradeToCanonical: Invalid grades throw errors');
 
 // Test gradeFromCanonical with valid canonical grades
-for (const grade of [4, 5, 6, 7, 8, 9, 10]) {
+for (const grade of [4, 5, 6, 7, 8, 9]) {
   const canonical = `G${grade}`;
   const result = gradeFromCanonical(canonical);
   assert.strictEqual(result, grade, `gradeFromCanonical("${canonical}") should return ${grade}`);
@@ -555,8 +555,8 @@ for (const gradeArray of allGradeArrays) {
     );
     const num = parseInt(grade.substring(1), 10);
     assert.ok(
-      !isNaN(num) && num >= 4 && num <= 10,
-      `Grade ${grade} should represent a valid numeric grade 4-10`
+      !isNaN(num) && num >= 4 && num <= 9,
+      `Grade ${grade} should represent a valid numeric grade 4-9`
     );
   }
 }
