@@ -1,4 +1,5 @@
 // Canonical payload builder and validator
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS } from './config.js';
 
 /**
  * Builds the exact payload from the current state
@@ -15,7 +16,7 @@ export function buildPayload(state) {
     school: {
       name: s.school.name || "",
       filled_by: s.school.filled_by || "",
-      filled_at: s.school.filled_at || new Date().toISOString().split('T')[0]
+      filled_at: s.school.filled_at || ""
     },
     policy: {
       generalists_grade_scope: s.policy.generalists_grade_scope || "explicit_only",
@@ -136,10 +137,13 @@ export function validatePayload(payload) {
           errors.push(`Subject ${index + 1} (${subject.subject_code}): grade_levels and periods_per_week must have the same length`);
         }
         
-        // Check for zero periods - this should be excluded, not zero
+        // Period inputs are constrained to whole numbers from 1 through 20.
         for (let i = 0; i < subject.periods_per_week.length; i++) {
-          if (subject.periods_per_week[i] === 0) {
+          const periods = subject.periods_per_week[i];
+          if (periods === 0) {
             errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${subject.grade_levels[i]} has 0 periods - this grade should be excluded entirely, not set to 0`);
+          } else if (!Number.isInteger(periods) || periods < 1 || periods > 20) {
+            errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${subject.grade_levels[i]} periods/week must be a whole number from 1 to 20`);
           }
         }
         
@@ -150,6 +154,14 @@ export function validatePayload(payload) {
           }
           if (typeof subject.periods_per_week[i] !== "number") {
             errors.push(`Subject ${index + 1} (${subject.subject_code}): periods_per_week must contain numbers, got ${typeof subject.periods_per_week[i]}`);
+          }
+        }
+        
+        // Validate grade values are within the school grade range
+        for (let i = 0; i < subject.grade_levels.length; i++) {
+          const grade = subject.grade_levels[i];
+          if (typeof grade === "number" && !SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
           }
         }
       }
@@ -185,8 +197,8 @@ export function validatePayload(payload) {
         errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): teacher_name is required`);
       }
       
-      if (typeof teacher.max_periods_week !== "number") {
-        errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): max_periods_week must be a number`);
+      if (!Number.isInteger(teacher.max_periods_week) || teacher.max_periods_week < 0 || teacher.max_periods_week > 100) {
+        errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): max_periods_week must be a whole number from 0 to 100`);
       }
       
       if (typeof teacher.specialist !== "boolean") {
@@ -195,6 +207,8 @@ export function validatePayload(payload) {
       
       if (typeof teacher.confidence !== "number") {
         errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): confidence must be a number`);
+      } else if (teacher.confidence < 0 || teacher.confidence > 1) {
+        errors.push(`Teacher ${index + 1} (${teacher.teacher_id}): confidence must be a number between 0 and 1`);
       }
       
       if (teacher.flag_note !== null && typeof teacher.flag_note !== "string") {
@@ -225,6 +239,16 @@ export function validatePayload(payload) {
       
       if (!cap.grades_can_teach || !Array.isArray(cap.grades_can_teach)) {
         errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grades_can_teach must be an array`);
+      } else {
+        // Validate grade elements in capabilities
+        for (let i = 0; i < cap.grades_can_teach.length; i++) {
+          const grade = cap.grades_can_teach[i];
+          if (typeof grade !== "number") {
+            errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grades_can_teach must contain numbers, got ${typeof grade}`);
+          } else if (!SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Capability ${index + 1} (${cap.teacher_id} -> ${cap.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
+          }
+        }
       }
     });
   }
@@ -244,6 +268,16 @@ export function validatePayload(payload) {
       
       if (!pref.grades || !Array.isArray(pref.grades)) {
         errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grades must be an array`);
+      } else {
+        // Validate grade elements in preferences
+        for (let i = 0; i < pref.grades.length; i++) {
+          const grade = pref.grades[i];
+          if (typeof grade !== "number") {
+            errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grades must contain numbers, got ${typeof grade}`);
+          } else if (!SCHOOL_GRADE_RANGE.includes(grade)) {
+            errors.push(`Preference ${index + 1} (${pref.teacher_id} -> ${pref.subject_code}): grade ${grade} is outside the valid range [${SCHOOL_GRADE_RANGE.join(", ")}]`);
+          }
+        }
       }
       
       if (![1, 2, 3].includes(pref.priority)) {
@@ -255,30 +289,65 @@ export function validatePayload(payload) {
       }
     });
   }
-  
-  // Specific test: SCI, INTSCI, PRETECH N/A grade-band exclusion
-  const sciSubject = payload.subjects.find(s => s.subject_code === "SCI");
-  if (sciSubject) {
-    const hasJrGrades = sciSubject.grade_levels.some(g => [7, 8, 9].includes(g));
-    if (hasJrGrades) {
-      errors.push("SCI (Science & Technology) must NOT include grades 7, 8, or 9 - these should be completely excluded, not set to 0 periods");
-    }
+
+  // Capabilities and preferences are relationships within this payload. Their
+  // endpoints and teacher/subject pairs must be internally consistent.
+  if (Array.isArray(payload.teachers) && Array.isArray(payload.subjects)) {
+    const teacherIds = new Set(payload.teachers.map(teacher => teacher.teacher_id));
+    const subjectCodes = new Set(payload.subjects.map(subject => subject.subject_code));
+    const subjectGradeMap = new Map();
+    payload.subjects.forEach(subj => {
+      subjectGradeMap.set(subj.subject_code, new Set(subj.grade_levels || []));
+    });
+    
+    const validateRelations = (relations, relationName) => {
+      if (!Array.isArray(relations)) return;
+
+      const pairs = new Set();
+      relations.forEach((relation, index) => {
+        const label = `${relationName} ${index + 1} (${relation.teacher_id} -> ${relation.subject_code})`;
+        if (!teacherIds.has(relation.teacher_id)) {
+          errors.push(`${label}: references an unknown teacher_id`);
+        }
+        if (!subjectCodes.has(relation.subject_code)) {
+          errors.push(`${label}: references an unknown subject_code`);
+        }
+        
+        // Validate grades in relation are applicable to the subject
+        const subjectGrades = subjectGradeMap.get(relation.subject_code);
+        if (subjectGrades) {
+          const gradesToCheck = relation.grades_can_teach || relation.grades || [];
+          for (const grade of gradesToCheck) {
+            if (typeof grade === "number" && !subjectGrades.has(grade)) {
+              errors.push(`${label}: grade ${grade} is not in the subject's grade_levels [${Array.from(subjectGrades).sort((a,b) => a-b).join(", ")}]`);
+            }
+          }
+        }
+
+        const pair = JSON.stringify([relation.teacher_id, relation.subject_code]);
+        if (pairs.has(pair)) {
+          errors.push(`Duplicate ${relationName.toLowerCase()} relation found: ${relation.teacher_id} -> ${relation.subject_code}`);
+        }
+        pairs.add(pair);
+      });
+    };
+
+    validateRelations(payload.capabilities, 'Capability');
+    validateRelations(payload.preferences, 'Preference');
   }
   
-  const intSciSubject = payload.subjects.find(s => s.subject_code === "INTSCI");
-  if (intSciSubject) {
-    const hasUpperPrimaryGrades = intSciSubject.grade_levels.some(g => [4, 5, 6].includes(g));
-    if (hasUpperPrimaryGrades) {
-      errors.push("INTSCI (Integrated Science) must NOT include grades 4, 5, or 6 - these should be completely excluded, not set to 0 periods");
-    }
-  }
-  
-  const preTechSubject = payload.subjects.find(s => s.subject_code === "PRETECH");
-  if (preTechSubject) {
-    const hasUpperPrimaryGrades = preTechSubject.grade_levels.some(g => [4, 5, 6].includes(g));
-    if (hasUpperPrimaryGrades) {
-      errors.push("PRETECH (Pre-Technical) must NOT include grades 4, 5, or 6 - these should be completely excluded, not set to 0 periods");
-    }
+  // Use the same local exclusion configuration as Step 2. This aligns the
+  // intake validator with the UI without asserting any external business rule.
+  if (Array.isArray(payload.subjects)) {
+    Object.entries(NA_EXCLUSIONS).forEach(([subjectCode, exclusion]) => {
+      const subject = payload.subjects.find(item => item.subject_code === subjectCode);
+      if (!subject || !Array.isArray(subject.grade_levels)) return;
+
+      const excludedGrades = exclusion.excluded_bands.flatMap(band => GRADE_BANDS[band] || []);
+      if (subject.grade_levels.some(grade => excludedGrades.includes(grade))) {
+        errors.push(`${subjectCode} must NOT include configured excluded grades (${excludedGrades.join(', ')})`);
+      }
+    });
   }
   
   return errors;

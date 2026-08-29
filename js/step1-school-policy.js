@@ -75,13 +75,14 @@ function render() {
       </div>
       
       <div class="form-group">
-        <label class="form-label" for="filled-by">Filled By</label>
+        <label class="form-label" for="filled-by">Filled By *</label>
         <input 
           type="text" 
           id="filled-by" 
           class="form-input" 
           placeholder="Your name"
           value="${escapeHtml(state.school.filled_by || '')}"
+          required
         >
       </div>
       
@@ -225,6 +226,14 @@ function validateStep() {
   
   if (!state.school.name || state.school.name.trim() === '') {
     errors.push('School name is required');
+  }
+
+  if (!state.school.filled_by || state.school.filled_by.trim() === '') {
+    errors.push('Filled by is required');
+  }
+
+  if (!state.school.filled_at) {
+    errors.push('Filled at date is required');
   }
   
   return errors;

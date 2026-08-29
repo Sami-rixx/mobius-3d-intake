@@ -1,20 +1,12 @@
 // Step 2: Subject Roster
 import { getState, updateState } from './state.js';
 import { navigateToStep } from './main.js';
-import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS } from './config.js';
+import { SCHOOL_GRADE_RANGE, GRADE_BANDS, NA_EXCLUSIONS, SEED_SUBJECTS } from './config.js';
+import { parseNumericInput } from './numbers.js';
+import { renameSubjectCode } from './subject-relations.js';
 
 // DOM elements
 const stepContainer = document.getElementById('step-2');
-
-// Seed subjects from the spec
-const SEED_SUBJECTS = [
-  { subject_code: 'ENG', subject_name: 'English', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'MATH', subject_name: 'Mathematics', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5, 5, 5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'AGRI', subject_name: 'Agriculture & Nutrition', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY, ...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [3, 3, 3, 3, 3, 3, 3], double_lessons_allowed: false },
-  { subject_code: 'SCI', subject_name: 'Science & Technology', grade_levels: [...GRADE_BANDS.UPPER_PRIMARY], periods_per_week: [4, 4, 4], double_lessons_allowed: true },
-  { subject_code: 'INTSCI', subject_name: 'Integrated Science', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [5, 5, 5], double_lessons_allowed: true },
-  { subject_code: 'PRETECH', subject_name: 'Pre-Technical', grade_levels: [...GRADE_BANDS.JR_SCHOOL, ...GRADE_BANDS.SENIOR_SCHOOL], periods_per_week: [4, 4, 4], double_lessons_allowed: true }
-];
 
 // Initialize
 function init() {
@@ -197,7 +189,11 @@ function setupEventListeners() {
       const field = id.startsWith('subject-code') ? 'subject_code' : 'subject_name';
       
       const newState = getState();
-      newState.subjects[index][field] = e.target.value;
+      if (field === 'subject_code') {
+        renameSubjectCode(newState, index, e.target.value);
+      } else {
+        newState.subjects[index][field] = e.target.value;
+      }
       updateState(newState);
       validateAndUpdateButton();
     });
@@ -208,7 +204,7 @@ function setupEventListeners() {
     el.addEventListener('input', (e) => {
       const index = parseInt(el.dataset.index);
       const grade = parseInt(el.dataset.grade);
-      const value = parseInt(e.target.value) || 0;
+      const value = parseNumericInput(e.target.value);
       
       const newState = getState();
       const subject = newState.subjects[index];
@@ -312,8 +308,11 @@ function validateStep() {
     
     // Check for zero periods (should be excluded, not zero)
     for (let i = 0; i < subject.periods_per_week.length; i++) {
-      if (subject.periods_per_week[i] === 0) {
+      const periods = subject.periods_per_week[i];
+      if (periods === 0) {
         errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${subject.grade_levels[i]} has 0 periods - this grade should be excluded entirely`);
+      } else if (!Number.isInteger(periods) || periods < 1 || periods > 20) {
+        errors.push(`Subject ${index + 1} (${subject.subject_code}): grade ${subject.grade_levels[i]} periods/week must be a whole number from 1 to 20`);
       }
     }
   });
