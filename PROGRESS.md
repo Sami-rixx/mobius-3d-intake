@@ -8,6 +8,7 @@
 - 2025-07-18 Milestone 5 — Step 3: Teachers with repeatable cards, capabilities/preferences grid, subject-level granularity implemented
 - 2025-07-18 Milestone 6 — Assembly: main.js step router, output.js with download/copy/send actions, full QA checklist verified
 - 2025-07-18 Part 7 Fixes — Grade range trimmed to G4-G10 via shared config.js, priority chips wired as real radio groups with visual selection state, grade labels high-contrast
+- 2025-08-29 Grade range updated to G4-G9 (Upper Primary + Junior Secondary only), Senior School/G10 removed
 
 ## Key decisions made
 - Plain HTML + CSS + vanilla JS (ES modules), no framework, no bundler, no build step

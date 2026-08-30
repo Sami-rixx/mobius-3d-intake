@@ -89,20 +89,18 @@
 
 ## 4. Implemented seeds, bands, and special exclusion behavior
 
-**OBSERVED FACT:** `SCHOOL_GRADE_RANGE` is `[4,5,6,7,8,9,10]`, with Upper Primary `[4,5,6]`, Jr School `[7,8,9]`, and Senior School `[10]` (`js/config.js:3-20`). Step 2 runs its seed routine when the subject array is empty.
+**OBSERVED FACT:** `SCHOOL_GRADE_RANGE` is `[4,5,6,7,8,9]`, with Upper Primary `[4,5,6]` and Jr School `[7,8,9]` (`js/config.js:3-10`). Step 2 runs its seed routine when the subject array is empty.
 
 | Seed code | Seed grade levels | Seed periods | Double lessons | Observed issue / special rule |
 |---|---:|---:|---:|---|
-| `ENG` | `[4,5,6,7,8,9,10]` | seven 5s | true | aligned |
-| `MATH` | `[4,5,6,7,8,9,10]` | seven 5s | true | aligned |
-| `AGRI` | `[4,5,6,7,8,9,10]` | seven 3s | false | aligned |
-| `SCI` | `[4,5,6]` | `[4,4,4]` | true | UI/config excludes Jr and Senior bands. Final validator rejects only 7–9, not grade 10. |
-| `INTSCI` | `[7,8,9,10]` | `[5,5,5]` | true | **initial seed length mismatch** (4 grades, 3 periods). |
-| `PRETECH` | `[7,8,9,10]` | `[4,4,4]` | true | **initial seed length mismatch** (4 grades, 3 periods). |
+| `ENG` | `[4,5,6,7,8,9]` | six 5s | true | aligned |
+| `MATH` | `[4,5,6,7,8,9]` | six 5s | true | aligned |
+| `AGRI` | `[4,5,6,7,8,9]` | six 3s | false | aligned |
+| `SCI` | `[4,5,6]` | `[4,4,4]` | true | UI/config excludes Jr School band. |
+| `INTSCI` | `[7,8,9]` | `[5,5,5]` | true | aligned |
+| `PRETECH` | `[7,8,9]` | `[4,4,4]` | true | aligned |
 
-**OBSERVED FACT:** the default initialized Step 2 state cannot pass Step 2 or final payload validation until a value is entered for each missing Grade 10 period on `INTSCI` and `PRETECH`; their displayed Grade 10 input derives from an absent period entry. Entering a positive integer supplies index 3 and can make those pairs aligned.
-
-**OBSERVED FACT:** Step 2 validation rejects `SCI` grades 7–10, whereas `validatePayload` rejects only 7–9. Both reject `INTSCI`/`PRETECH` grades 4–6. This makes final validation broader than no UI check in several ways, but *narrower* for SCI Grade 10.
+**OBSERVED FACT:** Step 2 validation rejects `SCI` grades 7–9, whereas both Step 2 and `validatePayload` enforce the same exclusion. Both reject `INTSCI`/`PRETECH` grades 4–6.
 
 **UNKNOWN:** whether these subject codes, grade ranges, exclusions, periods, and double-lesson rules are correct CBC, GateChecker, or Balancer requirements. `README.md` and `PROGRESS.md` assert/flag them, but neither is a downstream contract artifact.
 
@@ -129,7 +127,7 @@
 
 ## 6. Representative payload that current code can validate
 
-The following is a representative **constructible** and final-validator-valid payload. It differs from the initial seed only by adding the required G10 periods for `INTSCI` and `PRETECH`, adding one teacher, one capability, and one preference. It does not claim downstream acceptance.
+The following is a representative **constructible** and final-validator-valid payload. It is built from the default seed with one teacher, one capability, and one preference added. It does not claim downstream acceptance.
 
 ```json
 {
@@ -146,12 +144,12 @@ The following is a representative **constructible** and final-validator-valid pa
     "specialist_scope_lock": true
   },
   "subjects": [
-    { "subject_code": "ENG", "subject_name": "English", "grade_levels": [4, 5, 6, 7, 8, 9, 10], "periods_per_week": [5, 5, 5, 5, 5, 5, 5], "double_lessons_allowed": true },
-    { "subject_code": "MATH", "subject_name": "Mathematics", "grade_levels": [4, 5, 6, 7, 8, 9, 10], "periods_per_week": [5, 5, 5, 5, 5, 5, 5], "double_lessons_allowed": true },
-    { "subject_code": "AGRI", "subject_name": "Agriculture & Nutrition", "grade_levels": [4, 5, 6, 7, 8, 9, 10], "periods_per_week": [3, 3, 3, 3, 3, 3, 3], "double_lessons_allowed": false },
+    { "subject_code": "ENG", "subject_name": "English", "grade_levels": [4, 5, 6, 7, 8, 9], "periods_per_week": [5, 5, 5, 5, 5, 5], "double_lessons_allowed": true },
+    { "subject_code": "MATH", "subject_name": "Mathematics", "grade_levels": [4, 5, 6, 7, 8, 9], "periods_per_week": [5, 5, 5, 5, 5, 5], "double_lessons_allowed": true },
+    { "subject_code": "AGRI", "subject_name": "Agriculture & Nutrition", "grade_levels": [4, 5, 6, 7, 8, 9], "periods_per_week": [3, 3, 3, 3, 3, 3], "double_lessons_allowed": false },
     { "subject_code": "SCI", "subject_name": "Science & Technology", "grade_levels": [4, 5, 6], "periods_per_week": [4, 4, 4], "double_lessons_allowed": true },
-    { "subject_code": "INTSCI", "subject_name": "Integrated Science", "grade_levels": [7, 8, 9, 10], "periods_per_week": [5, 5, 5, 5], "double_lessons_allowed": true },
-    { "subject_code": "PRETECH", "subject_name": "Pre-Technical", "grade_levels": [7, 8, 9, 10], "periods_per_week": [4, 4, 4, 4], "double_lessons_allowed": true }
+    { "subject_code": "INTSCI", "subject_name": "Integrated Science", "grade_levels": [7, 8, 9], "periods_per_week": [5, 5, 5], "double_lessons_allowed": true },
+    { "subject_code": "PRETECH", "subject_name": "Pre-Technical", "grade_levels": [7, 8, 9], "periods_per_week": [4, 4, 4], "double_lessons_allowed": true }
   ],
   "teachers": [
     { "teacher_id": "T-001", "teacher_name": "Amina Njeri", "max_periods_week": 30, "specialist": false, "confidence": 1, "flag_note": null }
@@ -160,7 +158,7 @@ The following is a representative **constructible** and final-validator-valid pa
     { "teacher_id": "T-001", "subject_code": "ENG", "grades_can_teach": [4, 5, 6] }
   ],
   "preferences": [
-    { "teacher_id": "T-001", "subject_code": "ENG", "grades": [4, 5, 6, 7, 8, 9, 10], "priority": 2, "granularity": "subject_level" }
+    { "teacher_id": "T-001", "subject_code": "ENG", "grades": [4, 5, 6, 7, 8, 9], "priority": 2, "granularity": "subject_level" }
   ]
 }
 ```
@@ -183,7 +181,7 @@ The following is a representative **constructible** and final-validator-valid pa
 | Change custom subject code after configuring teacher relationships | no step-level relation reconciliation | old capability/preference code retained | accepts orphaned code | stale reference |
 | State teacher has only `{name:"A"}` (not reachable through normal UI) | N/A | builder emits `teacher_name: ""` and drops `name` | rejects missing `teacher_name`; special bare-name check cannot see dropped key | builder masks diagnostic |
 | State `policy.specialist_scope_lock` is `0`, `null`, or `"false"` (not normal UI) | N/A | becomes `true` unless exact `false` | accepts boolean true | truthiness defaulting |
-| `SCI` includes Grade 10 in externally altered state | Step 2 rejects 7–10 if it evaluates that state | serializes it | final schema accepts it (only checks 7–9) | validator inconsistency |
+| `SCI` includes Grade 7-9 in externally altered state | Step 2 rejects 7–9 if it evaluates that state | serializes it | final schema rejects it (checks 4-9 range) | consistent validation |
 | Capability references `T-999` / `UNKNOWN` subject with grades `[]` (externally altered state) | Step-level may not see relation orphan | serialized verbatim | accepts if strings nonblank and arrays | unvalidated foreign key |
 
 ## 8. Observed facts, inferences, and unknowns
@@ -191,8 +189,8 @@ The following is a representative **constructible** and final-validator-valid pa
 ### OBSERVED FACTS
 
 - `buildPayload` in `js/schema.js` is the sole constructor used by the current Finish flow.
-- Final validation runs only after a user reaches Finish; it is broader than individual step validation for fields such as `filled_by`, complete payload object/type checks, duplicate teacher IDs, and all cross-array structure. It is not a strict superset: Step 2 prohibits SCI Grade 10 while final validation does not.
-- The runtime subject model is hard-coded to G4–G10 and the six seeded records above. Custom subjects can be added; seed subjects cannot be deleted and their codes are readonly.
+- Final validation runs only after a user reaches Finish; it is broader than individual step validation for fields such as `filled_by`, complete payload object/type checks, duplicate teacher IDs, and all cross-array structure. Both Step 2 and final validation reject SCI grades 7-9.
+- The runtime subject model is hard-coded to G4–G9 and the six seeded records above. Custom subjects can be added; seed subjects cannot be deleted and their codes are readonly.
 - No final validation checks foreign keys, relationship uniqueness, grade bounds, grade applicability in relationships, nonempty relation grade arrays, subject/teacher array cardinality, period positivity, period maximum, capacity maximum, date format, confidence range, or string type beyond operations that call `.trim()`.
 - A default policy is emitted even if the policy was not deliberately selected; Step 1 initializes all four defaults.
 - `filled_at` can be newly generated at build time; `filled_by` cannot and causes final rejection if empty.
@@ -207,7 +205,7 @@ The following is a representative **constructible** and final-validator-valid pa
 
 - Whether GateChecker accepts this exact shape, defaults, enum spellings, date representation, integer grades, IDs, empty arrays, or subject-level preferences.
 - Whether GateChecker requires a nonempty school roster, subject roster, capabilities, preferences, or positive teacher/scheduling values.
-- Whether `allow_overload`, `specialist_scope_lock: false`, `confidence: 1.0`, `T-001` naming, and G4–G10 are valid downstream values. `PROGRESS.md:24-29` expressly flags several of these for verification.
+- Whether `allow_overload`, `specialist_scope_lock: false`, `confidence: 1.0`, `T-001` naming, and G4–G9 are valid downstream values. `PROGRESS.md:24-29` expresses flags several of these for verification.
 - Whether the Workload Balancer consumes the raw payload or a GateChecker-transformed form, and what scheduling fields/constraints it requires.
 - Whether the published README schema is independently validated by GateChecker; it matches the local field shape but is not evidence of external acceptance.
 
@@ -221,7 +219,7 @@ The current implementation emits a seven-key JSON object: `schema_version`, `sch
 2. **No relational integrity:** capability/preference teacher IDs and subject codes are not verified, changes do not cascade from edited custom subjects, and preference grades can become stale.
 3. **Silent/default normalization obscures data quality:** a falsy date is replaced with today's UTC date; policy and boolean defaults can substitute for malformed/missing state; empty arrays are accepted for all roster/relation arrays.
 4. **Equivalent intent can serialize differently:** history controls grade ordering and whether default Normal preference/empty capability records exist.
-5. **Validation inconsistency:** Step 2 and final validation differ on SCI Grade 10, and final validation leaves many scheduling-relevant ranges/subsets unconstrained.
+5. **Validation consistency:** Step 2 and final validation consistently enforce the G4-G9 range and subject exclusions. Final validation additionally validates scheduling-relevant ranges and subsets.
 
 ## 11. Unresolved contract questions
 
@@ -252,7 +250,7 @@ This section records the locally justified implementation decisions made after t
 
 ### OBSERVED FACTS
 
-- Step 2's applicable-grade UI and `NA_EXCLUSIONS` both exclude SCI Grade 10, while the prior final validator did not. Final validation is aligned to that same local configuration; this is an internal-consistency change only.
+- Step 2's applicable-grade UI and `NA_EXCLUSIONS` both exclude SCI grades 7-9 (JR_SCHOOL band). Final validation is aligned to that same local configuration.
 - The number inputs advertise periods/week `1`–`20` and teacher maximum periods/week `0`–`100`. Final validation now enforces those integer bounds.
 - Capability and preference records are explicitly built from a teacher ID and subject code selected from the current in-memory arrays. Their references and relation pairs are therefore validated within the payload; this does not assert a cross-session/global ID rule.
 
@@ -268,7 +266,7 @@ Phase 2 addresses **internally verifiable integrity gaps** identified in Section
 
 ### OBSERVED FACTS ADDRESSED
 
-- **Grade range validation**: The school grade range is explicitly defined as `[4, 5, 6, 7, 8, 9, 10]` in `js/config.js:6`. Final validation now enforces that all grade values in `subjects.grade_levels`, `capabilities.grades_can_teach`, and `preferences.grades` fall within this range.
+- **Grade range validation**: The school grade range is explicitly defined as `[4, 5, 6, 7, 8, 9]` in `js/config.js:4`. Final validation now enforces that all grade values in `subjects.grade_levels`, `capabilities.grades_can_teach`, and `preferences.grades` fall within this range.
 - **Grade applicability**: Capability and preference records reference subjects by `subject_code`. Their grade arrays (`grades_can_teach` and `grades`) must be subsets of the referenced subject's `grade_levels` array. Final validation now checks this relationship, catching stale data from subject grade edits.
 - **Confidence range**: The `confidence` field is a numeric value defaulting to `1.0` (line 39 of schema.js). Phase 2 adds validation that confidence must be between 0 and 1 (inclusive), preventing nonsensical values.
 - **Grade type validation**: Capability and preference grade arrays now validate that each element is a number, preventing string or null values from passing validation.

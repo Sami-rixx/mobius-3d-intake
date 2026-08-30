@@ -64,7 +64,7 @@ The adapter accepts the exact payload produced by `buildPayload()` in `js/schema
     {
       "subject_code": string,      // Non-blank, uppercase
       "subject_name": string,      // Non-blank
-      "grade_levels": number[],    // Numeric grades [4, 5, 6, 7, 8, 9, 10]
+      "grade_levels": number[],    // Numeric grades [4, 5, 6, 7, 8, 9]
       "periods_per_week": number[],// Aligned with grade_levels, integers 1-20
       "double_lessons_allowed": boolean // default: true
     }
@@ -83,14 +83,14 @@ The adapter accepts the exact payload produced by `buildPayload()` in `js/schema
     {
       "teacher_id": string,        // Non-blank
       "subject_code": string,      // Non-blank
-      "grades_can_teach": number[] // Numeric grades [4, 5, 6, 7, 8, 9, 10]
+      "grades_can_teach": number[] // Numeric grades [4, 5, 6, 7, 8, 9]
     }
   ],
   "preferences": [
     {
       "teacher_id": string,        // Non-blank
       "subject_code": string,      // Non-blank
-      "grades": number[],          // Numeric grades [4, 5, 6, 7, 8, 9, 10]
+      "grades": number[],          // Numeric grades [4, 5, 6, 7, 8, 9]
       "priority": number,          // Integer 1-3
       "granularity": string        // "subject_level"
     }
@@ -165,7 +165,7 @@ The adapter produces a payload compatible with both downstream systems:
 
 ### 4.1 Grade Representation Normalization (CRITICAL)
 
-**Problem:** Möbius uses numeric grades `[4, 5, 6, 7, 8, 9, 10]` while GateChecker and Workload Balancer use canonical string grades `["G4", "G5", "G6", "G7", "G8", "G9", "G10"]`.
+**Problem:** Möbius uses numeric grades `[4, 5, 6, 7, 8, 9]` while GateChecker and Workload Balancer use canonical string grades `["G4", "G5", "G6", "G7", "G8", "G9"]`.
 
 **Solution:** All numeric grade arrays are converted to canonical string format:
 - `subjects[].grade_levels: number[]` → `string[]`
@@ -174,7 +174,7 @@ The adapter produces a payload compatible with both downstream systems:
 
 **Format:** `"G" + grade` (e.g., `4` → `"G4"`)
 
-**Validation:** Each numeric grade must be in `SCHOOL_GRADE_RANGE` (`[4, 5, 6, 7, 8, 9, 10]`)
+**Validation:** Each numeric grade must be in `SCHOOL_GRADE_RANGE` (`[4, 5, 6, 7, 8, 9]`)
 
 ### 4.2 Teacher Name Field Compatibility (CRITICAL)
 
@@ -245,7 +245,7 @@ The adapter follows a **fail-fast** approach with clear, actionable error messag
 | Missing required field | `Missing required field: {fieldPath}` | `Missing required field: schema_version` |
 | Invalid type | `Invalid type for field {fieldPath}: expected {expected}, got {actual}` | `Invalid type for field teachers[0].max_periods_week: expected integer, got string` |
 | Out of range | `Field {fieldPath} out of range: {value} must be between {min} and {max}` | `Field teachers[0].max_periods_week out of range: 150 must be between 0 and 100` |
-| Invalid grade | `Invalid numeric grade: {grade}. Must be integer in [4, 5, 6, 7, 8, 9, 10]` | `Invalid numeric grade: 11. Must be integer in [4, 5, 6, 7, 8, 9, 10]` |
+| Invalid grade | `Invalid numeric grade: {grade}. Must be integer in [4, 5, 6, 7, 8, 9]` | `Invalid numeric grade: 11. Must be integer in [4, 5, 6, 7, 8, 9]` |
 | Array length mismatch | `Array length mismatch at {path}: {field1} has X elements, {field2} has Y elements` | `Array length mismatch at subjects[0]: grade_levels has 3 elements, periods_per_week has 2 elements` |
 | Invalid input | `Adapter input must be a non-null object (Mobius canonical payload)` | (self-explanatory) |
 
@@ -304,7 +304,7 @@ const gradeNum = gradeFromCanonical("G4"); // 4
 ```
 
 **Parameters:**
-- `gradeToCanonical`: (number) numeric grade (4-10)
+- `gradeToCanonical`: (number) numeric grade (4-9)
 - `gradeFromCanonical`: (string) canonical grade string (e.g., "G4")
 
 **Returns:** 
@@ -413,7 +413,7 @@ Möbius 3D Intake → buildPayload() → transformToDownstream() → HTTP POST
 
 3. **No grade applicability validation:** The adapter does not validate that capability/preference grades are valid for the referenced subject. This is GateChecker's responsibility (I013 rule).
 
-4. **Grade range limitation:** The adapter only supports the Möbius school grade range [4, 5, 6, 7, 8, 9, 10]. Future grade expansions would require adapter updates.
+4. **Grade range limitation:** The adapter only supports the Möbius school grade range [4, 5, 6, 7, 8, 9]. Future grade expansions would require adapter updates.
 
 5. **No schema version negotiation:** The adapter expects and produces schema_version "1.0.0". Future schema versions would require explicit handling.
 

@@ -53,9 +53,6 @@ function getApplicableGrades(subjectCode) {
   if (!exclusions.excluded_bands.includes('JR_SCHOOL')) {
     applicable = applicable.concat(GRADE_BANDS.JR_SCHOOL);
   }
-  if (!exclusions.excluded_bands.includes('SENIOR_SCHOOL')) {
-    applicable = applicable.concat(GRADE_BANDS.SENIOR_SCHOOL);
-  }
   
   return applicable;
 }
@@ -320,9 +317,9 @@ function validateStep() {
   // Specific test: SCI/INTSCI/PRETECH exclusions
   const sciSubject = state.subjects.find(s => s.subject_code === 'SCI');
   if (sciSubject) {
-    const hasJrGrades = sciSubject.grade_levels.some(g => [7, 8, 9, 10].includes(g));
+    const hasJrGrades = sciSubject.grade_levels.some(g => [7, 8, 9].includes(g));
     if (hasJrGrades) {
-      errors.push('SCI (Science & Technology) must NOT include grades 7, 8, 9, or 10 - these should be completely excluded');
+      errors.push('SCI (Science & Technology) must NOT include grades 7, 8, or 9 - these should be completely excluded');
     }
   }
   
